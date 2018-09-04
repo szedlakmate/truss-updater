@@ -67,13 +67,10 @@ class Boundaries(object):
     * support [DOF ID] - Only rigid supports
     """
     def __init__(self, support_list):
-        self.supports = []
+        self.supports = support_list
         for support in support_list:
-            if type(support) is list and len(support) == 2 and type(support[0]) is int and type(support[1]) is float:
-                self.supports.append(support)
-            else:
-                raise TypeError(
-                    'support data is corrupt. Type should be int but found:\n%s' % str(support))
+            if not(type(support) is list and len(support) == 2 and type(support[0]) is int and type(support[1]) is float):
+                raise TypeError('support data is corrupt. Type should be [int, float] but found:\n%s' % str(support))
 
 
 class Loads(object):
