@@ -156,6 +156,6 @@ def read_structure_file(input_file):
     node_list = structure['coordinates']
     element_list = structure['elements']
     boundaries = structure['supports']
-    loads = structure['forces']
+    loads = {'displacements': [], 'forces': structure['forces'], 'stresses': []}
 
     return node_list, element_list, boundaries, loads
