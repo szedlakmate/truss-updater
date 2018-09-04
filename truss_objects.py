@@ -10,20 +10,6 @@ from copy import deepcopy
 from read_input_file import read_structure_file
 
 
-# TODO: stop mocking data
-def read_structure_file_mock(input_file=''):
-    """
-    Reading structural data, boundaries and loads - MOCKED!!!!
-
-    :param input_file: (string) filename to be opened
-    :return: (node_list, element_list, boundaries, loads)
-
-    example: read_structure_file('bridge.str')
-    """
-    print(input_file)
-    return [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0]], [[[0, 1], 0.0, 0.0]], [0, 1, 2, 3, 5], {'forces': [[4, 1.0]]}
-
-
 class Element(object):
     """
     * connection: [1. node, 2. node] where 1 -> 2
@@ -66,7 +52,7 @@ class StructuralData(object):
             else:
                 raise TypeError('Nodal data is corrupt.\nType should be [float, float, float] but found:\n%s'
                                 % str(node))
-
+        # Build element list
         self.element = []
         for element in element_list:
             self.element.append(Element(element[0], element[1], element[2]))
