@@ -164,3 +164,67 @@ class Truss(object):
 
         # Setting up loads
         self.loads = Loads(loads)
+
+        # Solve structure
+        self.solve('original')
+
+        # Start model updating
+        self.start_model_updating()
+
+    def calculate_stiffness_matrix(self, version):
+        print('Calculate %s stiffness matrix' % version)
+        pass
+
+    def solve(self, version):
+        # Calculate stiffness-matrix
+        self.calculate_stiffness_matrix(version)
+
+        print('Solve %s structure' % version)
+
+        pass
+
+    def start_model_updating(self):
+        loop_counter = 0
+        while True and loop_counter < 10:
+            loop_counter += 1
+
+            # Read sensors
+            self.perceive()
+
+            # Set new boundaries
+            self.apply_new_boundaries()
+
+            # Refine/update forces
+            self.apply_new_forces()
+
+            # Calculate refreshed and/or updated models
+            self.solve('original')
+            self.solve('updated')
+
+            if self.should_reset() is False:
+                self.updated = deepcopy(self.update())
+            else:
+                self.updated = deepcopy(self.original)
+                print('Reset structure')
+
+
+    def perceive(self):
+        pass
+
+    def apply_new_boundaries(self):
+        pass
+
+    def apply_new_forces(self):
+        pass
+
+    def should_reset(self):
+        return False
+
+    def update(self):
+        return self.compile(self.guess())
+
+    def guess(self):
+        return None
+
+    def compile(self, guess):
+        return self.original
