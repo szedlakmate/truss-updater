@@ -44,6 +44,10 @@ class StructuralData(object):
         - cross-section [m^2]
     """
     def __init__(self, node_list, element_list):
+        # Reset error of the structure - according to the measurements
+        self.error = 0
+
+        # Build node list
         self.node = []
         for node in node_list:
             if type(node) is list and len(node) == 3 and type(node[0]) is float and type(node[1]) is float \
@@ -65,7 +69,7 @@ class Boundaries(object):
     def __init__(self, support_list):
         self.supports = []
         for support in support_list:
-            if type(support) is int:
+            if type(support) is list and len(support) == 2 and type(support[0]) is int and type(support[1]) is float:
                 self.supports.append(support)
             else:
                 raise TypeError(
@@ -147,7 +151,7 @@ class Truss(object):
         self.title = title.replace('.str', '')  # Name of the structure
 
         # Reading structural data, boundaries and loads
-        (node_list, element_list, boundaries, loads) = read_structure_file(input_file)
+        (node_list, element_list, boundaries, loads) = read_structure_file("%s.str" % input_file)
 
         # Setting up basic structure
         self.original = StructuralData(node_list, element_list)
