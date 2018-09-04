@@ -50,6 +50,7 @@ def read_structure_file(input_file):
         with open("./Structures/" + input_file, "r") as sourcefile:
             source_line = ""
             structure = {}
+            dof = 3
 
             while source_line != "EOF":
                 source_line = sourcefile.readline().strip()
@@ -78,6 +79,7 @@ def read_structure_file(input_file):
                     if len(input_string[0]) == 3:
                         input_number = [[float(x[0]), float(x[1]), float(x[2])] for x in input_string]
                     elif len(input_string[0]) == 2:
+                        dof = 2
                         input_number = [[float(x[0]), float(x[1]), 0.0] for x in input_string]
 
                     structure['coordinates'] = input_number
@@ -127,7 +129,13 @@ def read_structure_file(input_file):
                         input_string = [x.split(';') for x in source_line.split('|')]
                     if [''] in input_string:
                         input_string.remove([''])
-                    input_number = [[int(x[0]), float(x[1])] for x in input_string]
+
+                    if dof == 3:
+                        input_number = [[int(x[0]), float(x[1])] for x in input_string]
+                    else:
+                        input_number = [[(int(x[0]) // 2) * 3 + int(x[0]) % 2, float(x[1])] for x in input_string]
+                        extra_supports = [[int(x * 3 + 2), 0.0] for x in range(len(input_number))]
+                        input_number.extend(extra_supports)
 
                     structure['supports'] = sorted(input_number)
                     read_elements[5] = True
