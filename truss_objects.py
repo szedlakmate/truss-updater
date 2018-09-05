@@ -174,46 +174,58 @@ class Truss(object):
         """
         Stiffness matrix compilation
         """
-        self.boundaries = list(k for k, _ in itertools.groupby(sorted(self.boundaries)))
+        # Set pointer to target structure
+        if version == 'original':
+            structure = self.original
+        elif version == 'updated':
+            structure = self.updated
+        else:
+            raise TypeError("Pointer is unknown. Should be 'original' or 'updated' but got:\n%s" % version)
+        
+        self.boundaries.supports = list(k for k, _ in itertools.groupby(sorted(self.boundaries.supports)))
 
         # Setting known forces
         known_f_a = []
         known_f_not_zero = []
         
-        for location in range(len(self['version'].node)):
+        for location in range(len(structure.node * 3)):
             known_f_a.append(location)
-            if self.loads.forces[location] != 0:
+            if location in [x[0] for x in self.loads.forces]:
                 known_f_not_zero.append(location)
                 
-        for constraint in self.boundaries:  
+        for constraint in self.boundaries.supports:
             if constraint[0] in known_f_a:
                 known_f_a.remove(constraint[0])
                 
             if constraint[0] in known_f_not_zero:
                 known_f_not_zero.remove(constraint[0])
 
-        elements_lengths = [0] * len(self['version'].element)
-        _norm_stiff = [0] * len(self['version'].element)
-        _cx = [0] * len(self['version'].element)
-        _cy = [0] * len(self['version'].element)
-        _cz = [0] * len(self['version'].element)
-        _s_loc = [0] * len(self['version'].element)
-        local_stiffness_matrix = [0] * len(self['version'].element)
-        stiffness_matrix = [[0] * (len(self['version'].node) * 3)] * (len(self['version'].node) * 3)
+        elements_lengths = [0] * len(structure.element)
+        _norm_stiff = [0] * len(structure.element)
+        _cx = [0] * len(structure.element)
+        _cy = [0] * len(structure.element)
+        _cz = [0] * len(structure.element)
+        _s_loc = [0] * len(structure.element)
+        local_stiffness_matrix = [0] * len(structure.element)
+        stiffness_matrix = [[0] * (len(structure.node) * 3)] * (len(structure.node) * 3)
 
-        for i in range(len(self['version'].element)):
+        for i in range(len(structure.element)):
+
             elements_lengths[i] = \
-                math.sqrt(sum([(j - i) ** 2 for j, i
-                               in zip(self.nodal_coord[self.nodal_connections[i][1]],
-                                      self.nodal_coord[self.nodal_connections[i][0]])]))
+                math.sqrt(sum([(j - k) ** 2 for j, k
+                               in zip(structure.node[structure.element[i].connection[1]],
+                                      structure.node[structure.element[i].connection[0]])]))
 
-            _cx[i] = (self.nodal_coord[self.nodal_connections[i][1]][0]
-                           - self.nodal_coord[self.nodal_connections[i][0]][0]) / elements_lengths[i]
-            _cy[i] = (self.nodal_coord[self.nodal_connections[i][1]][1]
-                           - self.nodal_coord[self.nodal_connections[i][0]][1]) / elements_lengths[i]
-            _cz[i] = (self.nodal_coord[self.nodal_connections[i][1]][2]
-                           - self.nodal_coord[self.nodal_connections[i][0]][2]) / elements_lengths[i]
-            _norm_stiff[i] = self.elastic_modulo[i] / elements_lengths[i]
+            _cx[i] = (structure.node[structure.element[i].connection[1]][0]
+                      - structure.node[structure.element[i].connection[0]][0]) / elements_lengths[i]
+
+            _cy[i] = (structure.node[structure.element[i].connection[1]][1]
+                      - structure.node[structure.element[i].connection[0]][1]) / elements_lengths[i]
+
+            _cz[i] = (structure.node[structure.element[i].connection[1]][2]
+                      - structure.node[structure.element[i].connection[0]][2]) / elements_lengths[i]
+
+            _norm_stiff[i] = structure.element[i].material / elements_lengths[i]
 
             # local stiffness matrix calculation
             _s_loc[i] = [
@@ -230,12 +242,20 @@ class Truss(object):
                 [-_cx[i] * _cz[i], -_cy[i] * _cz[i], -_cz[i] ** 2, _cx[i] * _cz[i],
                  _cy[i] * _cz[i], _cz[i] ** 2]]
 
-            local_stiffness_matrix[i] = [[y * self.cross_sectional_area_list[i] * _norm_stiff[i]
+            local_stiffness_matrix[i] = [[y * structure.element[i].section * _norm_stiff[i]
                                           for y in x] for x in _s_loc[i]]
 
-            ele_dof_vec = self.element_dof[i]
 
-            stiffness_increment = [0] * (len(self['version'].node) * 3)
+            # Creating mapping tool for elements
+            element_dof = []
+            for element in structure.element:
+                node = element.connection
+                element_dof.append(
+                    [node[0] * 3, node[0] * 3 + 1, node[0] * 3 + 2, node[1] * 3, node[1] * 3 + 1, node[1] * 3 + 2])
+
+            ele_dof_vec = element_dof[i]
+
+            stiffness_increment = [0] * (len(structure.node) * 3)
 
             for j in range(3 * 2):
                 for k in range(3 * 2):
