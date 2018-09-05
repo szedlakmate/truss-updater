@@ -9,6 +9,8 @@ Copyright MIT, Máté Szedlák 2016-2018.
 from copy import deepcopy
 import itertools
 import math
+import numpy
+
 from read_input_file import read_structure_file
 
 
@@ -165,7 +167,7 @@ class Truss(object):
         self.loads = Loads(loads)
 
         # Solve structure
-        self.solve('original')
+        self.solve('original', self.boundaries, self.loads)
 
         # Start model updating
         self.start_model_updating()
@@ -245,7 +247,6 @@ class Truss(object):
             local_stiffness_matrix[i] = [[y * structure.element[i].section * _norm_stiff[i]
                                           for y in x] for x in _s_loc[i]]
 
-
             # Creating mapping tool for elements
             element_dof = []
             for element in structure.element:
@@ -263,47 +264,59 @@ class Truss(object):
                 stiffness_matrix[ele_dof_vec[j]] = \
                     [x + y for x, y in zip(stiffness_matrix[ele_dof_vec[j]], stiffness_increment)]
 
-        return stiffness_matrix
+        return stiffness_matrix, known_f_a
 
-    def solve(self, version):
+    def solve(self, version, boundaries, loads):
         print('Solve %s structure' % version)
 
+        # Set pointer to target structure
+        if version == 'original':
+            structure = self.original
+        elif version == 'updated':
+            structure = self.updated
+        else:
+            raise TypeError("Pointer is unknown. Should be 'original' or 'updated' but got:\n%s" % version)
+
         # Calculate stiffness-matrix
-        stiffness_matrix = self.calculate_stiffness_matrix(version)
+        (stiffness_matrix, known_f_a) = self.calculate_stiffness_matrix(version)
 
-        self.dis_new = [0] * (self.number_of_nodes() * 3 - len(self.constraint))
-        self.force_new = [0] * (self.number_of_nodes() * 3 - len(self.constraint))
-        self.stiff_new = [[0] * (self.number_of_nodes() * 3 - len(self.constraint))] * \
-                         (self.number_of_nodes() * 3 - len(self.constraint))
+        constraints = deepcopy(boundaries.supports)
 
-        # known force array
-        for i, dof in enumerate(self.known_f_a):
-            self.force_new[i] = self.force[dof]
+        forces = [0] * (len(structure.node) * 3 - len(constraints))
+        for (dof, force) in deepcopy(loads.forces):
+            forces[dof] = force
 
-        stiffness_increment = [0] * (self.number_of_nodes() * 3 - len(self.constraint))
-        for i, kfai in enumerate(self.known_f_a):
-            for j, kfaj in enumerate(self.known_f_a):
-                stiffness_increment[j] = self.stiffness_matrix[kfai][kfaj]
-            self.stiff_new[i] = [x + y for x, y in zip(self.stiff_new[i], stiffness_increment)]
+        # deepcopy(loads.forces)
+        displacements = [0.0] * (len(structure.node) * 3)
+        for (dof, displacement) in deepcopy(loads.displacements):
+            displacements[dof] = displacement
+
+        stiff_new = [[0.0] * (len(structure.node) * 3 - len(constraints))] * \
+                    (len(structure.node) * 3 - len(constraints))
+
+        stiffness_increment = [0.0] * (len(structure.node) * 3 - len(constraints))
+        
+        for i, kfai in enumerate(known_f_a):
+            for j, kfaj in enumerate(known_f_a):
+                stiffness_increment[j] = stiffness_matrix[kfai][kfaj]
+            stiff_new[i] = [x + y for x, y in zip(stiff_new[i], stiffness_increment)]
 
         # SOLVING THE STRUCTURE
-        if configuration.solver == 0:
-            self.dis_new = multiply_matrix_vector(invert(self.stiff_new), self.force_new)
-        else:
-            self.dis_new = numpy.linalg.solve(numpy.array(self.stiff_new), numpy.array(self.force_new))
+        dis_new = numpy.linalg.solve(numpy.array(stiff_new), numpy.array(forces))
 
-        self.displacements = deepcopy(self._init_displacement)
+        for i, known_f_a in enumerate(known_f_a):
+            displacements[known_f_a] = dis_new[i]
 
-        for i, known_f_a in enumerate(self.known_f_a):
-            self.displacements[known_f_a] = self.dis_new[i]
-
+        deformed = {'node': []}
+        
         # Deformed shape
-        self.nodal_coord_def = []
-        for i in range(self.number_of_nodes()):
-            self.nodal_coord_def.append(
-                [self.nodal_coord[i][0] + self.displacements[i * 3 + 0],
-                 self.nodal_coord[i][1] + self.displacements[i * 3 + 1],
-                 self.nodal_coord[i][2] + self.displacements[i * 3 + 2]])
+        for i in range(len(structure.node)):
+            deformed['node'].append(
+                [structure.node[i][0] + displacements[i * 3 + 0],
+                 structure.node[i][1] + displacements[i * 3 + 1],
+                 structure.node[i][2] + displacements[i * 3 + 2]])
+
+        return deformed
 
     def start_model_updating(self):
         loop_counter = 0
@@ -320,8 +333,8 @@ class Truss(object):
             self.apply_new_forces()
 
             # Calculate refreshed and/or updated models
-            self.solve('original')
-            self.solve('updated')
+            self.solve('original', self.boundaries, self.loads)
+            self.solve('updated', self.boundaries, self.loads)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
