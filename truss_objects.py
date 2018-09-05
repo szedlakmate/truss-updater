@@ -266,12 +266,44 @@ class Truss(object):
         return stiffness_matrix
 
     def solve(self, version):
+        print('Solve %s structure' % version)
+
         # Calculate stiffness-matrix
         stiffness_matrix = self.calculate_stiffness_matrix(version)
 
-        print('Solve %s structure' % version)
+        self.dis_new = [0] * (self.number_of_nodes() * 3 - len(self.constraint))
+        self.force_new = [0] * (self.number_of_nodes() * 3 - len(self.constraint))
+        self.stiff_new = [[0] * (self.number_of_nodes() * 3 - len(self.constraint))] * \
+                         (self.number_of_nodes() * 3 - len(self.constraint))
 
-        pass
+        # known force array
+        for i, dof in enumerate(self.known_f_a):
+            self.force_new[i] = self.force[dof]
+
+        stiffness_increment = [0] * (self.number_of_nodes() * 3 - len(self.constraint))
+        for i, kfai in enumerate(self.known_f_a):
+            for j, kfaj in enumerate(self.known_f_a):
+                stiffness_increment[j] = self.stiffness_matrix[kfai][kfaj]
+            self.stiff_new[i] = [x + y for x, y in zip(self.stiff_new[i], stiffness_increment)]
+
+        # SOLVING THE STRUCTURE
+        if configuration.solver == 0:
+            self.dis_new = multiply_matrix_vector(invert(self.stiff_new), self.force_new)
+        else:
+            self.dis_new = numpy.linalg.solve(numpy.array(self.stiff_new), numpy.array(self.force_new))
+
+        self.displacements = deepcopy(self._init_displacement)
+
+        for i, known_f_a in enumerate(self.known_f_a):
+            self.displacements[known_f_a] = self.dis_new[i]
+
+        # Deformed shape
+        self.nodal_coord_def = []
+        for i in range(self.number_of_nodes()):
+            self.nodal_coord_def.append(
+                [self.nodal_coord[i][0] + self.displacements[i * 3 + 0],
+                 self.nodal_coord[i][1] + self.displacements[i * 3 + 1],
+                 self.nodal_coord[i][2] + self.displacements[i * 3 + 2]])
 
     def start_model_updating(self):
         loop_counter = 0
