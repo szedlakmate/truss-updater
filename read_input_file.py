@@ -134,7 +134,7 @@ def read_structure_file(input_file):
                         input_number = [[int(x[0]), float(x[1])] for x in input_string]
                     else:
                         input_number = [[(int(x[0]) // 2) * 3 + int(x[0]) % 2, float(x[1])] for x in input_string]
-                        extra_supports = [[int(x * 3 + 2), 0.0] for x in range(len(input_number))]
+                        extra_supports = [[int(x * 3 + 2), 0.0] for x in range(len(structure['coordinates']))]
                         input_number.extend(extra_supports)
 
                     structure['supports'] = sorted(input_number)
