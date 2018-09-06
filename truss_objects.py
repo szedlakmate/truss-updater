@@ -15,12 +15,14 @@ from read_input_file import read_structure_file
 
 
 class Element(object):
-    """
-    * connection: [1. node, 2. node] where 1 -> 2
-    * material: {number} E []
-    * section: {number} [m^2]
-    """
     def __init__(self, connection, material, section):
+        """
+        Element model
+
+        :param connection: [1. node, 2. node] where 1 -> 2
+        :param material: E []
+        :param section: cross-sectional area [m^2]
+        """
         if len(connection) == 2 and type(connection[0]) is int and type(connection[1]) is int:
             self.connection = connection
         else:
@@ -38,18 +40,21 @@ class Element(object):
 
 
 class StructuralData(object):
-    """
-    Data model for structures
+    def __init__(self, node_list, element_list, label=''):
+        """
+        Data model for structures
 
-    * node: list of nodal coordinates [ 1.[X, Y, Z], 2.[X, Y, Z], ... ]
-    * element: list of elements
+        :param node_list: list of nodal coordinates [ 1.[X, Y, Z], 2.[X, Y, Z], ... ]
+        :param element_list: list of elements
         - connection [i, j]
         - material [E]
         - cross-section [m^2]
-    """
-    def __init__(self, node_list, element_list):
+        :param label: title of the structure
+        """
         # Reset error of the structure - according to the measurements
         self.error = 0
+
+        self.label = label
 
         # Build node list
         self.node = []
@@ -67,22 +72,24 @@ class StructuralData(object):
 
 
 class Boundaries(object):
-    """
-    * support [DOF ID] - Only rigid supports
-    """
     def __init__(self, support_list):
+        """
+        Support model
+
+        :param support_list: [DOF ID, displacement] - Only rigid supports (displacement = 0 by default)
+        """
         self.supports = support_list
         for support in support_list:
-            if not(type(support) is list and len(support) == 2 and type(support[0]) is int and type(support[1]) is float):
+            if not(type(support) is list and len(support) == 2 and
+                   type(support[0]) is int and type(support[1]) is float):
                 raise TypeError('support data is corrupt. Type should be [int, float] but found:\n%s' % str(support))
 
 
 class Loads(object):
-    """
-    Load model
-    """
     def __init__(self, loads):
         """
+        Load model
+
         :param loads:
             * displacements: [ID, displacement m] - DOF ID
             * forces: [ID, force KN] - DOF ID
@@ -120,6 +127,8 @@ class Loads(object):
 
 class Measurements(object):
     """
+    Measurement model
+
     * displacements [ID, displacement m] - DOF ID
     * forces [ID, force KN] - DOF ID
     """
@@ -130,12 +139,17 @@ class Measurements(object):
 
 class Solution(object):
     """
-    * displacement [ID, displacement m] - DOF ID
+    Solution container model
+
+    * displacement [DOF ID, displacement m]
     * node: list of nodal coordinates [ 1.[X, Y, Z], 2.[X, Y, Z], ... ]
     * reaction [ID, force KN] - DOF ID
     * stress [ID, stress] - element ID
     """
     def __init__(self, number_of_nodes):
+        """
+        :param number_of_nodes: used for vector length calculation
+        """
         self.displacement = [None] * number_of_nodes * 3
         self.node = [[None, None, None]] * number_of_nodes
         self.reactions = [[None, None]] * 0
@@ -143,9 +157,13 @@ class Solution(object):
 
 
 class Truss(object):
-    """
-    """
-    def __init__(self, input_file, title):
+    def __init__(self, input_file, title=''):
+        """
+        Main container
+
+        :param input_file: file with structural data
+        :param title: title of the project
+        """
         # Labeling object
         if title == '':
             title = input_file
@@ -167,85 +185,65 @@ class Truss(object):
         self.loads = Loads(loads)
 
         # Solve structure
-        self.solve('original', self.boundaries, self.loads)
+        self.solve(self.original, self.boundaries, self.loads)
 
         # Start model updating
         self.start_model_updating()
 
-    def calculate_stiffness_matrix(self, version):
+    def calculate_stiffness_matrix(self, structure):
         """
         Stiffness matrix compilation
+
+        :param structure: pointer to a structure (original or updated)
+        :return: (stiffness_matrix, known_f_a)
         """
-        # Set pointer to target structure
-        if version == 'original':
-            structure = self.original
-        elif version == 'updated':
-            structure = self.updated
-        else:
-            raise TypeError("Pointer is unknown. Should be 'original' or 'updated' but got:\n%s" % version)
-        
+
         self.boundaries.supports = list(k for k, _ in itertools.groupby(sorted(self.boundaries.supports)))
 
         # Setting known forces
         known_f_a = []
         known_f_not_zero = []
-        
-        for location in range(len(structure.node * 3)):
+
+        for location in range(len(structure.node) * 3):
             known_f_a.append(location)
             if location in [x[0] for x in self.loads.forces]:
                 known_f_not_zero.append(location)
-                
+
         for constraint in self.boundaries.supports:
             if constraint[0] in known_f_a:
                 known_f_a.remove(constraint[0])
-                
+
             if constraint[0] in known_f_not_zero:
                 known_f_not_zero.remove(constraint[0])
 
-        elements_lengths = [0] * len(structure.element)
-        _norm_stiff = [0] * len(structure.element)
-        _cx = [0] * len(structure.element)
-        _cy = [0] * len(structure.element)
-        _cz = [0] * len(structure.element)
-        _s_loc = [0] * len(structure.element)
-        local_stiffness_matrix = [0] * len(structure.element)
         stiffness_matrix = [[0] * (len(structure.node) * 3)] * (len(structure.node) * 3)
 
         for i in range(len(structure.element)):
-
-            elements_lengths[i] = \
+            elements_length = \
                 math.sqrt(sum([(j - k) ** 2 for j, k
                                in zip(structure.node[structure.element[i].connection[1]],
                                       structure.node[structure.element[i].connection[0]])]))
 
-            _cx[i] = (structure.node[structure.element[i].connection[1]][0]
-                      - structure.node[structure.element[i].connection[0]][0]) / elements_lengths[i]
+            _cx = (structure.node[structure.element[i].connection[1]][0] -
+                   structure.node[structure.element[i].connection[0]][0]) / elements_length
 
-            _cy[i] = (structure.node[structure.element[i].connection[1]][1]
-                      - structure.node[structure.element[i].connection[0]][1]) / elements_lengths[i]
+            _cy = (structure.node[structure.element[i].connection[1]][1] -
+                   structure.node[structure.element[i].connection[0]][1]) / elements_length
 
-            _cz[i] = (structure.node[structure.element[i].connection[1]][2]
-                      - structure.node[structure.element[i].connection[0]][2]) / elements_lengths[i]
+            _cz = (structure.node[structure.element[i].connection[1]][2] -
+                   structure.node[structure.element[i].connection[0]][2]) / elements_length
 
-            _norm_stiff[i] = structure.element[i].material / elements_lengths[i]
+            _norm_stiff = structure.element[i].material / elements_length
 
             # local stiffness matrix calculation
-            _s_loc[i] = [
-                [_cx[i] ** 2, _cx[i] * _cy[i], _cx[i] * _cz[i], -_cx[i] ** 2,
-                 -_cx[i] * _cy[i], -_cx[i] * _cz[i]],
-                [_cx[i] * _cy[i], _cy[i] ** 2, _cy[i] * _cz[i], -_cx[i] * _cy[i],
-                 -_cy[i] ** 2, -_cy[i] * _cz[i]],
-                [_cx[i] * _cz[i], _cy[i] * _cz[i], _cz[i] ** 2, -_cx[i] * _cz[i],
-                 -_cy[i] * _cz[i], -_cz[i] ** 2],
-                [-_cx[i] ** 2, -_cx[i] * _cy[i], -_cx[i] * _cz[i], _cx[i] ** 2,
-                 _cx[i] * _cy[i], _cx[i] * _cz[i]],
-                [-_cx[i] * _cy[i], -_cy[i] ** 2, -_cy[i] * _cz[i], _cx[i] * _cy[i],
-                 _cy[i] ** 2, _cy[i] * _cz[i]],
-                [-_cx[i] * _cz[i], -_cy[i] * _cz[i], -_cz[i] ** 2, _cx[i] * _cz[i],
-                 _cy[i] * _cz[i], _cz[i] ** 2]]
+            _s_loc = [[_cx ** 2, _cx * _cy, _cx * _cz, -_cx ** 2, -_cx * _cy, -_cx * _cz],
+                      [_cx * _cy, _cy ** 2, _cy * _cz, -_cx * _cy, -_cy ** 2, -_cy * _cz],
+                      [_cx * _cz, _cy * _cz, _cz ** 2, -_cx * _cz, -_cy * _cz, -_cz ** 2],
+                      [-_cx ** 2, -_cx * _cy, -_cx * _cz, _cx ** 2, _cx * _cy, _cx * _cz],
+                      [-_cx * _cy, -_cy ** 2, -_cy * _cz, _cx * _cy, _cy ** 2, _cy * _cz],
+                      [-_cx * _cz, -_cy * _cz, -_cz ** 2, _cx * _cz, _cy * _cz, _cz ** 2]]
 
-            local_stiffness_matrix[i] = [[y * structure.element[i].section * _norm_stiff[i]
-                                          for y in x] for x in _s_loc[i]]
+            local_stiffness_matrix = [[y * structure.element[i].section * _norm_stiff for y in x] for x in _s_loc]
 
             # Creating mapping tool for elements
             element_dof = []
@@ -260,25 +258,18 @@ class Truss(object):
 
             for j in range(3 * 2):
                 for k in range(3 * 2):
-                    stiffness_increment[ele_dof_vec[k]] = local_stiffness_matrix[i][j][k]
+                    stiffness_increment[ele_dof_vec[k]] = local_stiffness_matrix[j][k]
+
                 stiffness_matrix[ele_dof_vec[j]] = \
                     [x + y for x, y in zip(stiffness_matrix[ele_dof_vec[j]], stiffness_increment)]
 
         return stiffness_matrix, known_f_a
 
-    def solve(self, version, boundaries, loads):
-        print('Solve %s structure' % version)
-
-        # Set pointer to target structure
-        if version == 'original':
-            structure = self.original
-        elif version == 'updated':
-            structure = self.updated
-        else:
-            raise TypeError("Pointer is unknown. Should be 'original' or 'updated' but got:\n%s" % version)
+    def solve(self, structure, boundaries, loads):
+        print('Solve structure')
 
         # Calculate stiffness-matrix
-        (stiffness_matrix, known_f_a) = self.calculate_stiffness_matrix(version)
+        (stiffness_matrix, known_f_a) = self.calculate_stiffness_matrix(structure)
 
         constraints = deepcopy(boundaries.supports)
 
@@ -295,10 +286,11 @@ class Truss(object):
                     (len(structure.node) * 3 - len(constraints))
 
         stiffness_increment = [0.0] * (len(structure.node) * 3 - len(constraints))
-        
+
         for i, kfai in enumerate(known_f_a):
             for j, kfaj in enumerate(known_f_a):
                 stiffness_increment[j] = stiffness_matrix[kfai][kfaj]
+
             stiff_new[i] = [x + y for x, y in zip(stiff_new[i], stiffness_increment)]
 
         # SOLVING THE STRUCTURE
@@ -308,7 +300,7 @@ class Truss(object):
             displacements[known_f_a] = dis_new[i]
 
         deformed = {'node': []}
-        
+
         # Deformed shape
         for i in range(len(structure.node)):
             deformed['node'].append(
@@ -320,6 +312,7 @@ class Truss(object):
 
     def start_model_updating(self):
         loop_counter = 0
+
         while True and loop_counter < 10:
             loop_counter += 1
 
@@ -333,8 +326,8 @@ class Truss(object):
             self.apply_new_forces()
 
             # Calculate refreshed and/or updated models
-            self.solve('original', self.boundaries, self.loads)
-            self.solve('updated', self.boundaries, self.loads)
+            self.solve(self.original, self.boundaries, self.loads)
+            self.solve(self.updated, self.boundaries, self.loads)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
