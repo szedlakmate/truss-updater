@@ -317,13 +317,13 @@ class Truss(object):
             loop_counter += 1
 
             # Read sensors
-            self.perceive()
+            (boundaries, loads) = self.perceive()
 
             # Set new boundaries
-            self.apply_new_boundaries()
+            self.apply_new_boundaries(boundaries)
 
             # Refine/update forces
-            self.apply_new_forces()
+            self.apply_new_forces(loads)
 
             # Calculate refreshed and/or updated models
             self.solve(self.original, self.boundaries, self.loads)
@@ -335,18 +335,25 @@ class Truss(object):
                 self.updated = deepcopy(self.original)
                 print('Reset structure')
 
-
     def perceive(self):
+        boundaries = []
+        loads = []
+
+        return boundaries, loads
+
+    def apply_new_boundaries(self, boundaries):
         pass
 
-    def apply_new_boundaries(self):
-        pass
-
-    def apply_new_forces(self):
+    def apply_new_forces(self, loads):
         pass
 
     def should_reset(self):
-        return False
+        should_reset = False
+
+        if self.updated.error > self.original.error:
+            should_reset = True
+
+        return should_reset
 
     def update(self):
         return self.compile(self.guess())
