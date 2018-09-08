@@ -7,12 +7,69 @@ Copyright MIT, Máté Szedlák 2016-2018.
 """
 
 from copy import deepcopy
-import itertools
 import math
 
 import numpy
 
 from read_input_file import read_structure_file
+
+
+def element_length(structure, index):
+    return math.sqrt(sum([(j - k) ** 2 for j, k
+                          in zip(structure.node[structure.element[index].connection[1]],
+                                 structure.node[structure.element[index].connection[0]])]))
+
+def calculate_stiffness_matrix(structure):
+    """
+    Stiffness matrix compilation
+
+    :param structure: pointer to a structure (original or updated)
+    :return: (stiffness_matrix, known_f_a)
+    """
+
+    stiffness_matrix = [[0] * (len(structure.node) * 3)] * (len(structure.node) * 3)
+
+    for i in range(len(structure.element)):
+        _cx = (structure.node[structure.element[i].connection[1]][0] -
+               structure.node[structure.element[i].connection[0]][0]) / element_length(structure, i)
+
+        _cy = (structure.node[structure.element[i].connection[1]][1] -
+               structure.node[structure.element[i].connection[0]][1]) / element_length(structure, i)
+
+        _cz = (structure.node[structure.element[i].connection[1]][2] -
+               structure.node[structure.element[i].connection[0]][2]) / element_length(structure, i)
+
+        _norm_stiff = structure.element[i].material / element_length(structure, i)
+
+        # local stiffness matrix calculation
+        _s_loc = [[_cx ** 2, _cx * _cy, _cx * _cz, -_cx ** 2, -_cx * _cy, -_cx * _cz],
+                  [_cx * _cy, _cy ** 2, _cy * _cz, -_cx * _cy, -_cy ** 2, -_cy * _cz],
+                  [_cx * _cz, _cy * _cz, _cz ** 2, -_cx * _cz, -_cy * _cz, -_cz ** 2],
+                  [-_cx ** 2, -_cx * _cy, -_cx * _cz, _cx ** 2, _cx * _cy, _cx * _cz],
+                  [-_cx * _cy, -_cy ** 2, -_cy * _cz, _cx * _cy, _cy ** 2, _cy * _cz],
+                  [-_cx * _cz, -_cy * _cz, -_cz ** 2, _cx * _cz, _cy * _cz, _cz ** 2]]
+
+        local_stiffness_matrix = [[y * structure.element[i].section * _norm_stiff for y in x] for x in _s_loc]
+
+        # Creating mapping tool for elements
+        element_dof = []
+        for element in structure.element:
+            node = element.connection
+            element_dof.append(
+                [node[0] * 3, node[0] * 3 + 1, node[0] * 3 + 2, node[1] * 3, node[1] * 3 + 1, node[1] * 3 + 2])
+
+        ele_dof_vec = element_dof[i]
+
+        stiffness_increment = [0] * (len(structure.node) * 3)
+
+        for j in range(3 * 2):
+            for k in range(3 * 2):
+                stiffness_increment[ele_dof_vec[k]] = local_stiffness_matrix[j][k]
+
+            stiffness_matrix[ele_dof_vec[j]] = \
+                [x + y for x, y in zip(stiffness_matrix[ele_dof_vec[j]], stiffness_increment)]
+
+    return stiffness_matrix
 
 
 class Element(object):
@@ -190,19 +247,11 @@ class Truss(object):
         # Initiating updated structure
         self.updated = deepcopy(self.original)
 
-    def calculate_stiffness_matrix(self, structure):
-        """
-        Stiffness matrix compilation
-
-        :param structure: pointer to a structure (original or updated)
-        :return: (stiffness_matrix, known_f_a)
-        """
-
-        self.boundaries.supports = list(k for k, _ in itertools.groupby(sorted(self.boundaries.supports)))
-
+    def solver_helper(self, structure):
         # Setting known forces
         known_f_a = []
         known_f_not_zero = []
+        known_displacement_a = []
 
         for location in range(len(structure.node) * 3):
             known_f_a.append(location)
@@ -210,66 +259,25 @@ class Truss(object):
                 known_f_not_zero.append(location)
 
         for constraint in self.boundaries.supports:
+            known_displacement_a.append(constraint[0])
             if constraint[0] in known_f_a:
                 known_f_a.remove(constraint[0])
 
             if constraint[0] in known_f_not_zero:
                 known_f_not_zero.remove(constraint[0])
 
-        stiffness_matrix = [[0] * (len(structure.node) * 3)] * (len(structure.node) * 3)
-
-        for i in range(len(structure.element)):
-            elements_length = \
-                math.sqrt(sum([(j - k) ** 2 for j, k
-                               in zip(structure.node[structure.element[i].connection[1]],
-                                      structure.node[structure.element[i].connection[0]])]))
-
-            _cx = (structure.node[structure.element[i].connection[1]][0] -
-                   structure.node[structure.element[i].connection[0]][0]) / elements_length
-
-            _cy = (structure.node[structure.element[i].connection[1]][1] -
-                   structure.node[structure.element[i].connection[0]][1]) / elements_length
-
-            _cz = (structure.node[structure.element[i].connection[1]][2] -
-                   structure.node[structure.element[i].connection[0]][2]) / elements_length
-
-            _norm_stiff = structure.element[i].material / elements_length
-
-            # local stiffness matrix calculation
-            _s_loc = [[_cx ** 2, _cx * _cy, _cx * _cz, -_cx ** 2, -_cx * _cy, -_cx * _cz],
-                      [_cx * _cy, _cy ** 2, _cy * _cz, -_cx * _cy, -_cy ** 2, -_cy * _cz],
-                      [_cx * _cz, _cy * _cz, _cz ** 2, -_cx * _cz, -_cy * _cz, -_cz ** 2],
-                      [-_cx ** 2, -_cx * _cy, -_cx * _cz, _cx ** 2, _cx * _cy, _cx * _cz],
-                      [-_cx * _cy, -_cy ** 2, -_cy * _cz, _cx * _cy, _cy ** 2, _cy * _cz],
-                      [-_cx * _cz, -_cy * _cz, -_cz ** 2, _cx * _cz, _cy * _cz, _cz ** 2]]
-
-            local_stiffness_matrix = [[y * structure.element[i].section * _norm_stiff for y in x] for x in _s_loc]
-
-            # Creating mapping tool for elements
-            element_dof = []
-            for element in structure.element:
-                node = element.connection
-                element_dof.append(
-                    [node[0] * 3, node[0] * 3 + 1, node[0] * 3 + 2, node[1] * 3, node[1] * 3 + 1, node[1] * 3 + 2])
-
-            ele_dof_vec = element_dof[i]
-
-            stiffness_increment = [0] * (len(structure.node) * 3)
-
-            for j in range(3 * 2):
-                for k in range(3 * 2):
-                    stiffness_increment[ele_dof_vec[k]] = local_stiffness_matrix[j][k]
-
-                stiffness_matrix[ele_dof_vec[j]] = \
-                    [x + y for x, y in zip(stiffness_matrix[ele_dof_vec[j]], stiffness_increment)]
-
-        return stiffness_matrix, known_f_a
+        return {'known_f_a': known_f_a,
+                'known_f_not_zero': known_f_not_zero,
+                'known_displacement_a': known_displacement_a}
 
     def solve(self, structure, boundaries, loads):
         print('Solve structure')
 
         # Calculate stiffness-matrix
-        (stiffness_matrix, known_f_a) = self.calculate_stiffness_matrix(structure)
+        stiffness_matrix = calculate_stiffness_matrix(structure)
+
+        helper = self.solver_helper(structure)
+        known_f_a = helper['known_f_a']
 
         constraints = deepcopy(boundaries.supports)
 
@@ -308,7 +316,34 @@ class Truss(object):
                  structure.node[i][1] + displacements[i * 3 + 1],
                  structure.node[i][2] + displacements[i * 3 + 2]])
 
+        # solution = {'deformed': deformed, 'known_displacement_a': known_displacement_a, 'displacements': displacements}
+
         return deformed
+
+    def post_process(self, truss, loads, boundaries, solution):
+
+        stiffness_matrix = calculate_stiffness_matrix(truss)
+
+        helper = self.solver_helper(truss)
+        known_displacement_a = helper['known_displacement_a']
+
+        # Calculates reaction forces and stresses
+        for i in known_displacement_a:
+            loads.forces[i] = 0
+            for j, displacement in enumerate(solution.displacements):
+                loads.forces[i] += stiffness_matrix[i][j]*displacement
+
+
+
+
+        stress = []
+
+        #s_max = max([abs(min(self.stress)), max(self.stress), 0.000000001])
+
+        # TODO: Should be written out using a function
+        #stress_color = [float(x)/float(s_max) for x in self.stress]
+
+        #return stress_color
 
     def start_model_updating(self):
         loop_counter = 0
@@ -326,8 +361,10 @@ class Truss(object):
             self.apply_new_forces(loads)
 
             # Calculate refreshed and/or updated models
-            self.solve(self.original, self.boundaries, self.loads)
-            self.solve(self.updated, self.boundaries, self.loads)
+            solution_original = self.solve(self.original, self.boundaries, self.loads)
+            solution_updated = self.solve(self.updated, self.boundaries, self.loads)
+
+            self.post_process(self.original, self.loads, self.boundaries, solution_original)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
