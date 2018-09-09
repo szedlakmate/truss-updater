@@ -12,27 +12,27 @@ from truss_objects import *
 
 
 class TestClassInitialization(object):
-    def test_element(self):
-        new_element = Element([0, 1], 0.0, 0.0)
 
-        assert new_element.connection == [0, 1]
-        assert new_element.material == 0.0
-        assert new_element.section == 0.0
+    def test_element(self, connection, material, section):
+        new_element = Element(connection, material, section)
 
-    def test_element_type_error(self):
+        assert new_element.connection == connection
+        assert new_element.material == material
+        assert new_element.section == section
+
+    def test_element_type_error(self, connection, material, section):
         with pytest.raises(TypeError):
-            Element([0, 1], 0.0, 0)
-
-        with pytest.raises(TypeError):
-            Element([0, 1], 0, 0.0)
+            Element(connection, material, 0)
 
         with pytest.raises(TypeError):
-            Element([0.0, 1], 0, 0.0)
+            Element(connection, 0, section)
 
         with pytest.raises(TypeError):
-            Element([0, 1.0], 0, 0.0)
+            Element([0.0, 1], material, section)
 
-    def test_element_invalid_coordinate(self):
+        with pytest.raises(TypeError):
+            Element([0, 1.0], material, section)
+
+    def test_element_invalid_coordinate(self, material, section):
         with pytest.raises(ValueError):
-            Element([0, 0], 0.0, 0.0)
-
+            Element([0, 0], material, section)
