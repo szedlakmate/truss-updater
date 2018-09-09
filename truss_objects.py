@@ -244,7 +244,7 @@ class Truss(object):
         self.boundaries = Boundaries(boundaries)
 
         # Setting up loads
-        self.loads = Loads({'forces': [[22, -9.80]]})
+        self.loads = Loads({'forces': [[25, -9.80]]})
 
         # Setup Input
         self.measurement = ArduinoMeasurements([37])
