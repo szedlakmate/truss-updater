@@ -38,14 +38,12 @@ def read_structure_file(input_file):
           COORDINATES - Nodal coordinates: 0, 0, 0, | 0, 3., 0. ...
           CROSS-SECTIONS - This data will be evaluated in Python: 3.0*(10**(-4)), 5.0*(10**(-4)) ...
           MATERIALS - This data will be evaluated in Python: 70.0*(10**9), 100.0*(10**9) ...
-          FORCES - Selected dof + Force: 11, +1000000.0 | 12, +1000000.0 ...
           SUPPORTS - Selected dof + Prescribed displacements: 0, 0.0 | 1, 0.0 ...
-          SPECIAL_DOF - Selected node's dof will be analysed during Model Updating: 1, xyz | 3 y | 10 xz ...
     
           EOF - For compatibility reasons EOF should be placed after the commands
       """
     _read_element_names = ["Elements", "Coordinates",
-                           "Cross-sections", "Materials", "Forces", "Supports", "Measured dofs"]
+                           "Cross-sections", "Materials", "Supports"]
 
     read_elements = [False] * len(_read_element_names)
 
@@ -70,7 +68,6 @@ def read_structure_file(input_file):
                                     for x in input_string]
 
                     structure['elements'] = input_number
-                    read_elements[0] = True
 
                 if source_line.upper() == "COORDINATES":
                     source_line = sourcefile.readline().strip()
@@ -87,7 +84,6 @@ def read_structure_file(input_file):
                         input_number = [[float(x[0]), float(x[1]), 0.0] for x in input_string]
 
                     structure['coordinates'] = input_number
-                    read_elements[1] = True
 
                 if source_line.upper() == "CROSS-SECTIONS":
                     source_line = sourcefile.readline().strip()
@@ -99,8 +95,6 @@ def read_structure_file(input_file):
                     for index in range(len(structure['elements'])):
                         structure['elements'][index][2] = input_number[index]
 
-                    read_elements[2] = True
-
                 if source_line.upper() == "MATERIALS":
                     source_line = sourcefile.readline().strip()
                     input_string = source_line.replace(',', '|').replace(';', '|').split('|')
@@ -111,20 +105,6 @@ def read_structure_file(input_file):
 
                     for index in range(len(structure['elements'])):
                         structure['elements'][index][1] = input_number[index]
-
-                    read_elements[3] = True
-
-                if source_line.upper() == "FORCES":
-                    source_line = sourcefile.readline().strip()
-                    input_string = [x.split(',') for x in source_line.split('|')]
-                    if len(input_string[0]) == 1:
-                        input_string = [x.split(';') for x in source_line.split('|')]
-                    if [''] in input_string:
-                        input_string.remove([''])
-                    input_number = [[int(x[0]), float(x[1])] for x in input_string]
-
-                    structure['forces'] = sorted(input_number)
-                    read_elements[4] = True
 
                 if source_line.upper() == "SUPPORTS":
                     source_line = sourcefile.readline().strip()
@@ -142,15 +122,6 @@ def read_structure_file(input_file):
                         input_number.extend(extra_supports)
 
                     structure['supports'] = list(k for k, _ in itertools.groupby(sorted(input_number)))
-
-                    read_elements[5] = True
-
-                if source_line.upper() == "MEASUREMENTS":
-                    source_line = sourcefile.readline().strip()
-                    special_dof_input_string = source_line
-
-                    structure['displacements'] = source_line.split(',')
-                    read_elements[6] = True
 
     except IOError:
         print("The following file could not be opened: " + "./Structures/" + input_file)
