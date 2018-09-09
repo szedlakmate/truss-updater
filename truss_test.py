@@ -60,6 +60,10 @@ class TestClassInitializations(object):
             StructuralData(node_list, [1.0])
 
 
-class TestTrussCalculations(object):
-    def test_stiffness_matrix_calculation(self, BRIDGE):
-        pass
+class TestBridgeCalculations(object):
+    def test_stiffness_matrix_calculation(self, BRIDGE_STIFFNESS_MATRIX, BRIDGE_KNOWN_F_A):
+        Bridge = Truss('bridge')
+        (new_stiffness_matrix, new_known_f_a) = Bridge.calculate_stiffness_matrix(Bridge.original)
+
+        assert new_stiffness_matrix == BRIDGE_STIFFNESS_MATRIX
+        assert new_known_f_a == BRIDGE_KNOWN_F_A
