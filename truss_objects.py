@@ -9,6 +9,7 @@ Copyright MIT, Máté Szedlák 2016-2018.
 from copy import deepcopy
 import itertools
 import math
+
 import numpy
 
 from read_input_file import read_structure_file
@@ -24,6 +25,8 @@ class Element(object):
         :param section: cross-sectional area [m^2]
         """
         if len(connection) == 2 and type(connection[0]) is int and type(connection[1]) is int:
+            if connection[0] == connection[1]:
+                raise ValueError('Connection start-end should not match: %s' % str(connection))
             self.connection = connection
         else:
             raise TypeError('connection data is corrupt. Type should be [int, int] but found:\n%s' % str(connection))
