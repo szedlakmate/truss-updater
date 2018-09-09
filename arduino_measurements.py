@@ -26,6 +26,10 @@ class ArduinoMeasurements(object):
     def __init__(self, id_list):
         self.id_list = id_list
 
+        self.displacements = []
+        self.loads = []
+
+
         # Measure initial distances
         calibration = self.calibrate()
 
@@ -37,3 +41,9 @@ class ArduinoMeasurements(object):
 
     def calibrate(self):
         return [0]
+
+    def update(self):
+        # TODO: write function: (read load from file should be eliminated)
+        # self.distances = [[ID, load]]
+        # self.loads = [[ID, measurement]]
+        pass
