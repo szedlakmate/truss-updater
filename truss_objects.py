@@ -202,18 +202,6 @@ class Loads(object):
                         'stress data is corrupt. Type should be [int, float] but found:\n%s' % str(stress))
 
 
-class Measurements(object):
-    """
-    Measurement model
-
-    * displacements [ID, displacement m] - DOF ID
-    * forces [ID, force KN] - DOF ID
-    """
-    def __init__(self, dispalecemnts, loads):
-        self.displacements = dispalecemnts
-        self.forces = loads
-
-
 class Solution(object):
     """
     Solution container model
@@ -369,11 +357,8 @@ class Truss(object):
             # Read sensors
             self.measurement.update()
 
-            # Set new boundaries
-            self.apply_new_displacements(self.measurement.displacements)
-
             # Refine/update forces
-            self.apply_new_forces(self.measurement.loads)
+            self.loads.forces = self.measurement.loads
 
             # Calculate refreshed and/or updated models
             solution_original = self.solve(self.original, self.boundaries, self.loads)
@@ -385,45 +370,11 @@ class Truss(object):
 
             print('Error: %.2f' % self.updated.error)
 
-            # self.post_process(self.original, self.loads, self.boundaries, solution_original)
-
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
             else:
                 self.updated = deepcopy(self.original)
                 print('Reset structure')
-
-    def perceive(self, displacement_switch = False, load_update_switch = False):
-        """
-        Reading environmental inputs: loads and the corresponding displacements
-
-        It is important that the loads should be quasi static and the measurements always should be taken after the
-        load was totally applied and the structure reached its final shape. The returned data is coupled.
-
-        :return: loads, displacements
-            - [1.load[DOF ID, load kN], [2. load[DOF ID, load kN], ...],
-            - [1. measurement[DOF ID, displacement], [2. measurement[DOF ID, displacement]]
-        """
-        displacements = None
-        loads = None
-
-        if displacement_switch:
-            displacements = read_deflections()
-            # TODO: map to structure by ID
-
-        if load_update_switch:
-            # TODO: loads = read_input()
-            # loads = read_input()
-            pass
-            # TODO: map to structure by ID
-
-        return Measurements(displacements, loads)
-
-    def apply_new_displacements(self, boundaries):
-        pass
-
-    def apply_new_forces(self, loads):
-        pass
 
     def should_reset(self):
         should_reset = False
