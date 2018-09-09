@@ -336,6 +336,16 @@ class Truss(object):
                 print('Reset structure')
 
     def perceive(self):
+        """
+        Reading environmental inputs: loads and the corresponding displacements
+
+        It is important that the loads should be quasi static and the measurements always should be taken after the
+        load was totally applied and the structure reached its final shape. The returned data is coupled.
+
+        :return: loads, displacements
+            - [1.load[DOF ID, load kN], [2. load[DOF ID, load kN], ...],
+            - [1. measurement[DOF ID, displacement], [2. measurement[DOF ID, displacement]]
+        """
         boundaries = []
         loads = []
 

@@ -46,3 +46,6 @@ def BRIDGE_STIFFNESS_MATRIX():
 @pytest.fixture(scope="module")
 def BRIDGE_KNOWN_F_A():
     return [3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22, 24, 25, 27, 28, 30, 31, 33, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48, 49, 51, 52, 54, 55, 57, 58, 60, 63, 64]
+
+# TODO: Manually calculated basic 3D example should be calculated and added by components, like:
+# stiffness matrix, solution, reactions, ideal update step, etc.
