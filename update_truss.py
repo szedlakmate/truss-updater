@@ -9,5 +9,6 @@ Copyright MIT, Máté Szedlák 2016-2018.
 from truss_objects import Truss
 
 
-# Start model updating
+# Start
 Truss = Truss('bridge', '')
+Truss.start_model_updating()

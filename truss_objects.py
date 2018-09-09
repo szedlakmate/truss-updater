@@ -9,6 +9,7 @@ Copyright MIT, Máté Szedlák 2016-2018.
 from copy import deepcopy
 import itertools
 import math
+
 import numpy
 
 from read_input_file import read_structure_file
@@ -24,6 +25,8 @@ class Element(object):
         :param section: cross-sectional area [m^2]
         """
         if len(connection) == 2 and type(connection[0]) is int and type(connection[1]) is int:
+            if connection[0] == connection[1]:
+                raise ValueError('Connection start-end should not match: %s' % str(connection))
             self.connection = connection
         else:
             raise TypeError('connection data is corrupt. Type should be [int, int] but found:\n%s' % str(connection))
@@ -175,9 +178,6 @@ class Truss(object):
         # Setting up basic structure
         self.original = StructuralData(node_list, element_list)
 
-        # Initiating updated structure
-        self.updated = deepcopy(self.original)
-
         # Setting up boundaries
         self.boundaries = Boundaries(boundaries)
 
@@ -187,8 +187,8 @@ class Truss(object):
         # Solve structure
         self.solve(self.original, self.boundaries, self.loads)
 
-        # Start model updating
-        self.start_model_updating()
+        # Initiating updated structure
+        self.updated = deepcopy(self.original)
 
     def calculate_stiffness_matrix(self, structure):
         """
@@ -336,6 +336,16 @@ class Truss(object):
                 print('Reset structure')
 
     def perceive(self):
+        """
+        Reading environmental inputs: loads and the corresponding displacements
+
+        It is important that the loads should be quasi static and the measurements always should be taken after the
+        load was totally applied and the structure reached its final shape. The returned data is coupled.
+
+        :return: loads, displacements
+            - [1.load[DOF ID, load kN], [2. load[DOF ID, load kN], ...],
+            - [1. measurement[DOF ID, displacement], [2. measurement[DOF ID, displacement]]
+        """
         boundaries = []
         loads = []
 
