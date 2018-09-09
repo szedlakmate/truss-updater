@@ -33,3 +33,6 @@ def element_list():
 def node_list():
     return [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 1.0]]
 
+@pytest.fixture(scope="module")
+def BRIDGE():
+    return Truss('bridge', '')

@@ -59,3 +59,7 @@ class TestClassInitializations(object):
         with pytest.raises(TypeError):
             StructuralData(node_list, [1.0])
 
+
+class TestTrussCalculations(object):
+    def test_stiffness_matrix_calculation(self, BRIDGE):
+        pass
