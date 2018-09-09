@@ -228,6 +228,7 @@ class Solution(object):
         self.node = [[None, None, None]] * number_of_nodes
         self.reactions = [[None, None]] * 0
         self.stress = [[None, None]] * 0
+        self.measurement = None
 
 
 class Truss(object):
@@ -359,29 +360,27 @@ class Truss(object):
     def start_model_updating(self):
         loop_counter = 0
 
-        self.measurement_config = ArduinoMeasurements()
+        self.measurement = ArduinoMeasurements([37])
 
         while True and loop_counter < 10:
             loop_counter += 1
 
             # Read sensors
-            measurements = self.self.measurement_config.read_defle
-
-            self.measurement_config
+            self.measurement.update()
 
             # Set new boundaries
-            self.apply_new_boundaries(boundaries)
+            self.apply_new_displacements(self.measurement.displacements)
 
             # Refine/update forces
-            self.apply_new_forces(loads)
+            self.apply_new_forces(self.measurement.loads)
 
             # Calculate refreshed and/or updated models
             solution_original = self.solve(self.original, self.boundaries, self.loads)
             solution_updated = self.solve(self.updated, self.boundaries, self.loads)
 
             # Calculate errors
-            self.original.error = error(measurements.displacements, solution_original)
-            self.updated.error = error(measurements['displacements'], solution_updated)
+            self.original.error = error(self.measurement.displacements, solution_original)
+            self.updated.error = error(self.measurement.displacements, solution_updated)
 
             # self.post_process(self.original, self.loads, self.boundaries, solution_original)
 
@@ -417,7 +416,7 @@ class Truss(object):
 
         return Measurements(displacements, loads)
 
-    def apply_new_boundaries(self, boundaries):
+    def apply_new_displacements(self, boundaries):
         pass
 
     def apply_new_forces(self, loads):
