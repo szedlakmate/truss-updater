@@ -7,6 +7,7 @@ Copyright MIT, Máté Szedlák 2016-2018.
 """
 
 import os
+import itertools
 
 
 def setup_folder(directory):
@@ -137,7 +138,8 @@ def read_structure_file(input_file):
                         extra_supports = [[int(x * 3 + 2), 0.0] for x in range(len(structure['coordinates']))]
                         input_number.extend(extra_supports)
 
-                    structure['supports'] = sorted(input_number)
+                    structure['supports'] = list(k for k, _ in itertools.groupby(sorted(input_number)))
+
                     read_elements[5] = True
 
                 if source_line.upper() == "MEASUREMENTS":
