@@ -18,7 +18,10 @@ def setup_folder(directory):
     path = str(os.path.dirname('.')) + '/' + directory.replace('/', '').replace('.', '') + '/'
 
     if not os.path.exists(path):
-        os.makedirs(path)
+        try:
+            os.makedirs(path)
+        except PermissionError:
+            pass
 
 
 def read_structure_file(input_file):
