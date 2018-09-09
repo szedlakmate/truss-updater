@@ -12,12 +12,28 @@ import math
 import numpy
 
 from read_input_file import read_structure_file
+from arduino_measurements import ArduinoMeasurements, read_deflections
 
 
 def element_length(structure, index):
     return math.sqrt(sum([(j - k) ** 2 for j, k
                           in zip(structure.node[structure.element[index].connection[1]],
                                  structure.node[structure.element[index].connection[0]])]))
+
+
+def error(measurements, calculated_displacements):
+    """
+    Error function using least-square method
+    :param delta: error vector
+    :return: sum of errors using least-square method
+    """
+    calculations =
+    error = 0
+    for index in range(len(measurements)):
+        error += (measurements[index][1] - calculations[index][])**2
+
+    return math.sqrt(error)
+
 
 def calculate_stiffness_matrix(structure):
     """
@@ -307,7 +323,7 @@ class Truss(object):
         for i, known_f_a in enumerate(known_f_a):
             displacements[known_f_a] = dis_new[i]
 
-        deformed = {'node': []}
+        deformed = {'node': [], 'displacements': displacements}
 
         # Deformed shape
         for i in range(len(structure.node)):
@@ -333,9 +349,6 @@ class Truss(object):
             for j, displacement in enumerate(solution.displacements):
                 loads.forces[i] += stiffness_matrix[i][j]*displacement
 
-
-
-
         stress = []
 
         #s_max = max([abs(min(self.stress)), max(self.stress), 0.000000001])
@@ -348,11 +361,15 @@ class Truss(object):
     def start_model_updating(self):
         loop_counter = 0
 
+        self.measurement_config = ArduinoMeasurements()
+
         while True and loop_counter < 10:
             loop_counter += 1
 
             # Read sensors
-            (boundaries, loads) = self.perceive()
+            measurements = self.self.measurement_config.read_defle
+
+            self.measurement_config
 
             # Set new boundaries
             self.apply_new_boundaries(boundaries)
@@ -364,7 +381,11 @@ class Truss(object):
             solution_original = self.solve(self.original, self.boundaries, self.loads)
             solution_updated = self.solve(self.updated, self.boundaries, self.loads)
 
-            self.post_process(self.original, self.loads, self.boundaries, solution_original)
+            # Calculate errors
+            self.original.error = error(measurements.displacements, solution_original)
+            self.updated.error = error(measurements['displacements'], solution_updated)
+
+            # self.post_process(self.original, self.loads, self.boundaries, solution_original)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
@@ -372,7 +393,7 @@ class Truss(object):
                 self.updated = deepcopy(self.original)
                 print('Reset structure')
 
-    def perceive(self):
+    def perceive(self, displacement_switch = False, load_update_switch = False):
         """
         Reading environmental inputs: loads and the corresponding displacements
 
@@ -383,10 +404,20 @@ class Truss(object):
             - [1.load[DOF ID, load kN], [2. load[DOF ID, load kN], ...],
             - [1. measurement[DOF ID, displacement], [2. measurement[DOF ID, displacement]]
         """
-        boundaries = []
-        loads = []
+        displacements = None
+        loads = None
 
-        return boundaries, loads
+        if displacement_switch:
+            displacements = read_deflections()
+            # TODO: map to structure by ID
+
+        if load_update_switch:
+            # TODO: loads = read_input()
+            # loads = read_input()
+            pass
+            # TODO: map to structure by ID
+
+        return Measurements(displacements, loads)
 
     def apply_new_boundaries(self, boundaries):
         pass
