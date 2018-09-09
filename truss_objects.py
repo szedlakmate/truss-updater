@@ -206,9 +206,9 @@ class Measurements(object):
     * displacements [ID, displacement m] - DOF ID
     * forces [ID, force KN] - DOF ID
     """
-    def __init__(self):
-        self.displacements = [[None, None]] * 0
-        self.forces = [[None, None]] * 0
+    def __init__(self, dispalecemnts, loads):
+        self.displacements = dispalecemnts
+        self.forces = loads
 
 
 class Solution(object):
