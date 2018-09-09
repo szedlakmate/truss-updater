@@ -11,8 +11,8 @@ import pytest
 from truss_objects import *
 
 
-class TestClassInitialization(object):
-
+class TestClassInitializations(object):
+    """Test Element class"""
     def test_element(self, connection, material, section):
         new_element = Element(connection, material, section)
 
@@ -33,6 +33,29 @@ class TestClassInitialization(object):
         with pytest.raises(TypeError):
             Element([0, 1.0], material, section)
 
-    def test_element_invalid_coordinate(self, material, section):
+    def test_element_invalid_connection(self, material, section):
         with pytest.raises(ValueError):
             Element([0, 0], material, section)
+
+    """Test StructuralData class"""
+    def test_structure(self, node_list, element_list):
+        new_structure = StructuralData(node_list, element_list)
+
+        assert new_structure.node == node_list
+        assert new_structure.element[0].connection == element_list[0][0]
+        assert new_structure.element[0].material == element_list[0][1]
+        assert new_structure.element[0].section == element_list[0][2]
+
+    def test_structure_type_error(self, node_list, element_list):
+        with pytest.raises(TypeError):
+            StructuralData([0.1], element_list)
+
+        with pytest.raises(TypeError):
+            StructuralData([[0.1, 0.1]], element_list)
+
+        with pytest.raises(TypeError):
+            StructuralData([[0.1, 0.1, 0.1, 0.1]], element_list)
+
+        with pytest.raises(TypeError):
+            StructuralData(node_list, [1.0])
+

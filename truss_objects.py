@@ -178,9 +178,6 @@ class Truss(object):
         # Setting up basic structure
         self.original = StructuralData(node_list, element_list)
 
-        # Initiating updated structure
-        self.updated = deepcopy(self.original)
-
         # Setting up boundaries
         self.boundaries = Boundaries(boundaries)
 
@@ -190,8 +187,8 @@ class Truss(object):
         # Solve structure
         self.solve(self.original, self.boundaries, self.loads)
 
-        # Start model updating
-        self.start_model_updating()
+        # Initiating updated structure
+        self.updated = deepcopy(self.original)
 
     def calculate_stiffness_matrix(self, structure):
         """

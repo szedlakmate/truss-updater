@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from truss_objects import Element
+from truss_objects import Element, Truss
 
 
 @pytest.fixture(scope="module")
@@ -21,4 +21,15 @@ def section():
 
 @pytest.fixture(scope="module")
 def element():
-    return Element([0, 1], 13145346465.000, 0.0000043)
+    return Element(connection(), material(), section())
+
+
+@pytest.fixture(scope="module")
+def element_list():
+    return [[[0, 1], 4354354.1, 0.000235], [[0, 1], 4354354.1, 0.000235], [[0, 1], 4354354.1, 0.000235]]
+
+
+@pytest.fixture(scope="module")
+def node_list():
+    return [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 1.0]]
+
