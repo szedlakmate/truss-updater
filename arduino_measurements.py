@@ -6,20 +6,7 @@ Truss framework created by Máté Szedlák.
 Copyright MIT, Máté Szedlák 2016-2018.
 """
 
-
-def read_deflections(measurement_config):
-    """
-    One measurement means a displacement along one axis (X/Y/Z)
-    A measurement value is negative if the displacement's ordinate is lower than at the initial moment,
-    e.g. when it goes "down".
-
-    Other radial displacement shall be divided into X/Y/Z directional components.
-    :return:
-    """
-    measurements = measurement_config.read_raw_input()
-
-    return [[measurement_config.id_list[i], measurements[i] - measurement_config.initial_distances[i][1]] for i
-            in range(len(measurement_config.id_list))]
+import random
 
 
 class ArduinoMeasurements(object):
@@ -29,21 +16,41 @@ class ArduinoMeasurements(object):
         self.displacements = []
         self.loads = []
 
-
         # Measure initial distances
-        calibration = self.calibrate()
+        self.initial_measurements = self.calibrate()
 
-        # Store initial measurements by DOF ID
-        self.initial_distances = [[self.id_list[i], calibration[i]] for i in range(len(self.id_list))]
+    def read_raw_input(self, fake, random_limit = 0):
+        """
+        Arduino input
 
-    def read_raw_input(self):
-        return [0]
+        :param fake: it will be returned wrapped in an array
+        :return: fake
+        """
+
+        if random_limit > 0:
+            random_input = fake + random.randint(-random_limit*10, +random_limit*10)/10
+            print("Randomized raw input function is mocked: %.2f" % random_input)
+            return [random_input]
+        else:
+            print("Raw input function is mocked: %.2f" % fake)
+            return [fake]
 
     def calibrate(self):
+        print("Calibration is mocked: set to 0")
         return [0]
 
     def update(self):
+        """
+        One measurement means a displacement along one axis (X/Y/Z)
+        A measurement value is negative if the displacement's ordinate is lower than at the initial moment,
+        e.g. when it goes "down".
+
+        Other radial displacement shall be divided into X/Y/Z directional components.
+        """
         # TODO: write function: (read load from file should be eliminated)
-        # self.distances = [[ID, load]]
-        # self.loads = [[ID, measurement]]
-        pass
+        # self.loads = [[ID, load]]
+
+        measurements = self.read_raw_input(-25, 10)
+
+        self.displacements = [[self.id_list[i], self.initial_measurements[i] - measurements[i]]
+                              for i in range(len(self.id_list))]
