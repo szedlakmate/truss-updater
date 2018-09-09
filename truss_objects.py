@@ -24,13 +24,11 @@ def element_length(structure, index):
 def error(measurements, calculated_displacements):
     """
     Error function using least-square method
-    :param delta: error vector
-    :return: sum of errors using least-square method
+    :return: summarized error (float)
     """
-    calculations =
     error = 0
     for index in range(len(measurements)):
-        error += (measurements[index][1] - calculations[index][])**2
+        error += (measurements[index][1] - calculated_displacements[measurements[index][0]])**2
 
     return math.sqrt(error)
 
