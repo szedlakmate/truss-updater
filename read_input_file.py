@@ -45,7 +45,8 @@ def read_structure_file(input_file):
     _read_element_names = ["Elements", "Coordinates",
                            "Cross-sections", "Materials", "Supports"]
 
-    read_elements = [False] * len(_read_element_names)
+    read_elements = {'elements': False, 'coordinates': False, 'cross-sections': False, 'materials': False,
+                     'support': False}
 
     try:
         setup_folder('Structures')
@@ -68,6 +69,7 @@ def read_structure_file(input_file):
                                     for x in input_string]
 
                     structure['elements'] = input_number
+                    read_elements['elements'] = True
 
                 if source_line.upper() == "COORDINATES":
                     source_line = sourcefile.readline().strip()
@@ -84,6 +86,7 @@ def read_structure_file(input_file):
                         input_number = [[float(x[0]), float(x[1]), 0.0] for x in input_string]
 
                     structure['coordinates'] = input_number
+                    read_elements['coordinates'] = True
 
                 if source_line.upper() == "CROSS-SECTIONS":
                     source_line = sourcefile.readline().strip()
@@ -95,6 +98,9 @@ def read_structure_file(input_file):
                     for index in range(len(structure['elements'])):
                         structure['elements'][index][2] = input_number[index]
 
+                    read_elements['cross-sections'] = True
+
+
                 if source_line.upper() == "MATERIALS":
                     source_line = sourcefile.readline().strip()
                     input_string = source_line.replace(',', '|').replace(';', '|').split('|')
@@ -105,6 +111,8 @@ def read_structure_file(input_file):
 
                     for index in range(len(structure['elements'])):
                         structure['elements'][index][1] = input_number[index]
+
+                    read_elements['materials'] = True
 
                 if source_line.upper() == "SUPPORTS":
                     source_line = sourcefile.readline().strip()
@@ -122,6 +130,7 @@ def read_structure_file(input_file):
                         input_number.extend(extra_supports)
 
                     structure['supports'] = list(k for k, _ in itertools.groupby(sorted(input_number)))
+                    read_elements['supports'] = True
 
     except IOError:
         print("The following file could not be opened: " + "./Structures/" + input_file)
@@ -140,6 +149,5 @@ def read_structure_file(input_file):
     node_list = structure['coordinates']
     element_list = structure['elements']
     boundaries = structure['supports']
-    loads = {'displacements': [], 'forces': structure['forces'], 'stresses': []}
 
-    return node_list, element_list, boundaries, loads
+    return node_list, element_list, boundaries
