@@ -12,7 +12,7 @@ import math
 import numpy
 
 from read_input_file import read_structure_file
-from arduino_measurements import ArduinoMeasurements, read_deflections
+from arduino_measurements import ArduinoMeasurements
 
 
 def element_length(structure, index):
@@ -24,13 +24,16 @@ def element_length(structure, index):
 def error(measurements, calculated_displacements):
     """
     Error function using least-square method
+
+    :param measurements: [[DOF ID, displacement], ...]
+    :param calculated_displacements: [1. DOF's displacement, 2. DOF's displacement, ...]
     :return: summarized error (float)
     """
-    error = 0
+    sum_of_errors = 0
     for index in range(len(measurements)):
-        error += (measurements[index][1] - calculated_displacements[measurements[index][0]])**2
+        sum_of_errors += (measurements[index][1] - calculated_displacements[measurements[index][0]])**2
 
-    return math.sqrt(error)
+    return math.sqrt(sum_of_errors)
 
 
 def calculate_stiffness_matrix(structure):
@@ -286,7 +289,6 @@ class Truss(object):
                 'known_displacement_a': known_displacement_a}
 
     def solve(self, structure, boundaries, loads):
-        print('Solve structure')
 
         # Calculate stiffness-matrix
         stiffness_matrix = calculate_stiffness_matrix(structure)
@@ -322,14 +324,13 @@ class Truss(object):
         for i, known_f_a in enumerate(known_f_a):
             displacements[known_f_a] = dis_new[i]
 
-        deformed = {'node': [], 'displacements': displacements}
+        deformed = {'node': [], 'displacement': displacements}
 
         # Deformed shape
         for i in range(len(structure.node)):
-            deformed['node'].append(
-                [structure.node[i][0] + displacements[i * 3 + 0],
-                 structure.node[i][1] + displacements[i * 3 + 1],
-                 structure.node[i][2] + displacements[i * 3 + 2]])
+            deformed['node'].extend([structure.node[i][0] + displacements[i * 3 + 0],
+                                     structure.node[i][1] + displacements[i * 3 + 1],
+                                     structure.node[i][2] + displacements[i * 3 + 2]])
 
         # solution = {'deformed': deformed, 'known_displacement_a': known_displacement_a, 'displacements': displacements}
 
@@ -379,8 +380,10 @@ class Truss(object):
             solution_updated = self.solve(self.updated, self.boundaries, self.loads)
 
             # Calculate errors
-            self.original.error = error(self.measurement.displacements, solution_original)
-            self.updated.error = error(self.measurement.displacements, solution_updated)
+            self.original.error = error(self.measurement.displacements, solution_original['displacement'])
+            self.updated.error = error(self.measurement.displacements, solution_updated['displacement'])
+
+            print('Error: %.2f' % self.updated.error)
 
             # self.post_process(self.original, self.loads, self.boundaries, solution_original)
 
