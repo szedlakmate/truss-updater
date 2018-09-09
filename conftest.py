@@ -45,3 +45,7 @@ def BRIDGE_STIFFNESS_MATRIX():
 
 # TODO: Manually calculated basic 3D example should be calculated and added by components, like:
 # stiffness matrix, solution, reactions, ideal update step, etc.
+
+@pytest.fixture(scope="module")
+def BRIDGE():
+    return Truss('bridge')
