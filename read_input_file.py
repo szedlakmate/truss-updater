@@ -138,9 +138,9 @@ def read_structure_file(input_file):
         raise IOError
 
     terminate = False
-    for i, value in enumerate(read_elements):
+    for key, value in enumerate(read_elements):
         if value is False:
-            print("The following was not found: " + _read_element_names[i])
+            print("The following was not found: " + key)
             terminate = True
 
     if terminate:
