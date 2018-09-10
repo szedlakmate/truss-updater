@@ -47,10 +47,11 @@ class ArduinoMeasurements(object):
 
         Other radial displacement shall be divided into X/Y/Z directional components.
         """
-        # TODO: write function: (read load from file should be eliminated)
-        # self.loads = [[ID, load]]
+        # TODO: write function for:
+        print('Loads are mocked: [25, -9.80]')
+        self.loads = [[25, -9.80]]
 
-        measurements = self.read_raw_input(-25, 10)
+        measurements = self.read_raw_input(25, 10)
 
         self.displacements = [[self.id_list[i], self.initial_measurements[i] - measurements[i]]
                               for i in range(len(self.id_list))]

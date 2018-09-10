@@ -219,7 +219,6 @@ class Solution(object):
         self.node = [[None, None, None]] * number_of_nodes
         self.reactions = [[None, None]] * 0
         self.stress = [[None, None]] * 0
-        self.measurement = None
 
 
 class Truss(object):
@@ -236,7 +235,7 @@ class Truss(object):
         self.title = title.replace('.str', '')  # Name of the structure
 
         # Reading structural data, boundaries and loads
-        (node_list, element_list, boundaries, loads) = read_structure_file("%s.str" % input_file)
+        (node_list, element_list, boundaries) = read_structure_file("%s.str" % input_file)
 
         # Setting up basic structure
         self.original = StructuralData(node_list, element_list)
@@ -245,10 +244,10 @@ class Truss(object):
         self.boundaries = Boundaries(boundaries)
 
         # Setting up loads
-        self.loads = Loads(loads)
+        self.loads = Loads({'forces': [[25, -9.80]]})
 
-        # Solve structure
-        self.solve(self.original, self.boundaries, self.loads)
+        # Setup Input
+        self.measurement = ArduinoMeasurements([37])
 
         # Initiating updated structure
         self.updated = deepcopy(self.original)
@@ -322,6 +321,9 @@ class Truss(object):
 
         # solution = {'deformed': deformed, 'known_displacement_a': known_displacement_a, 'displacements': displacements}
 
+        # Calculating the error
+        structure.error = error(self.measurement.displacements, displacements)
+
         return deformed
 
     def post_process(self, truss, loads, boundaries, solution):
@@ -348,8 +350,6 @@ class Truss(object):
 
     def start_model_updating(self):
         loop_counter = 0
-
-        self.measurement = ArduinoMeasurements([37])
 
         while True and loop_counter < 10:
             loop_counter += 1
