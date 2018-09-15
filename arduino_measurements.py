@@ -9,9 +9,27 @@ Copyright MIT, Máté Szedlák 2016-2018.
 import random
 
 
+def convert_node_id_to_dof_id(node_list):
+    dof_list = []
+
+    for node in node_list:
+        remainder = None
+        if node[-1].upper() == 'X':
+            remainder = 0
+        elif node[-1].upper() == 'Y':
+            remainder = 1
+        elif node[-1].upper() == 'Z':
+            remainder = 2
+
+        dof = int(node[0:len(node)-1]) * 3 + remainder
+        dof_list.append(dof)
+
+    return dof_list
+
+
 class ArduinoMeasurements(object):
-    def __init__(self, id_list):
-        self.id_list = id_list
+    def __init__(self, node_list):
+        self.id_list = convert_node_id_to_dof_id(node_list)
 
         self.displacements = []
         self.loads = []

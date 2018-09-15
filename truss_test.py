@@ -62,7 +62,7 @@ class TestClassInitializations(object):
 
 class TestBridgeCalculations(object):
     def test_stiffness_matrix_calculation(self, BRIDGE_STIFFNESS_MATRIX):
-        Bridge = Truss('bridge')
+        Bridge = Truss('bridge.str', 'test', ['12Y'])
         new_stiffness_matrix = calculate_stiffness_matrix(Bridge.original)
 
         assert new_stiffness_matrix == BRIDGE_STIFFNESS_MATRIX
