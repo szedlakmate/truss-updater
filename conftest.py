@@ -33,11 +33,6 @@ def element_list():
 def node_list():
     return [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 1.0]]
 
-"""
-@pytest.fixture(scope="module")
-def BRIDGE():
-    return Truss('bridge', '')
-"""
 
 @pytest.fixture(scope="module")
 def BRIDGE_STIFFNESS_MATRIX():
@@ -45,6 +40,7 @@ def BRIDGE_STIFFNESS_MATRIX():
 
 # TODO: Manually calculated basic 3D example should be calculated and added by components, like:
 # stiffness matrix, solution, reactions, ideal update step, etc.
+
 
 @pytest.fixture(scope="module")
 def BRIDGE():

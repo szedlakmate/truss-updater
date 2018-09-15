@@ -229,7 +229,6 @@ class Truss(object):
         :param input_file: file with structural data
         :param title: title of the project
         :param measurements: list of measured degree of freedoms, like ['12X', '15Z']
-        :param simulation:
         """
         # Labeling object
         if title == '':

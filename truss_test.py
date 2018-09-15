@@ -66,3 +66,12 @@ class TestBridgeCalculations(object):
         new_stiffness_matrix = calculate_stiffness_matrix(Bridge.original)
 
         assert new_stiffness_matrix == BRIDGE_STIFFNESS_MATRIX
+
+    def test_2D_struct_z_displacement(self):
+        Bridge = Truss('bridge.str', 'test', ['12Y'])
+
+        deformed = Bridge.solve(Bridge.original, Bridge.boundaries, Bridge.loads)
+
+        z_total = sum([deformed['node'][x] if x % 3 == 2 else 0 for x in range(len(deformed['node']))])
+
+        assert z_total == 0
