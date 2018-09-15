@@ -222,20 +222,23 @@ class Solution(object):
 
 
 class Truss(object):
-    def __init__(self, input_file, title=''):
+    def __init__(self, input_file, title, measurements):
         """
         Main container
 
         :param input_file: file with structural data
         :param title: title of the project
+        :param measurements: list of measured degree of freedoms, like ['12X', '15Z']
+        :param simulation:
         """
         # Labeling object
         if title == '':
-            title = input_file
-        self.title = title.replace('.str', '')  # Name of the structure
+            title = input_file.replace('.str', '')
+
+        self.title = title
 
         # Reading structural data, boundaries and loads
-        (node_list, element_list, boundaries) = read_structure_file("%s.str" % input_file)
+        (node_list, element_list, boundaries) = read_structure_file(input_file)
 
         # Setting up basic structure
         self.original = StructuralData(node_list, element_list)
@@ -247,7 +250,7 @@ class Truss(object):
         self.loads = Loads({'forces': [[25, -9.80]]})
 
         # Setup Input
-        self.measurement = ArduinoMeasurements([37])
+        self.measurement = ArduinoMeasurements(measurements)
 
         # Initiating updated structure
         self.updated = deepcopy(self.original)
