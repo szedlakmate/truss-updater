@@ -278,7 +278,6 @@ class Truss(object):
                 'known_displacement_a': known_displacement_a}
 
     def solve(self, structure, boundaries, loads):
-
         # Calculate stiffness-matrix
         stiffness_matrix = calculate_stiffness_matrix(structure)
 
@@ -291,7 +290,6 @@ class Truss(object):
         for (dof, force) in deepcopy(loads.forces):
             forces[dof] = force
 
-        # deepcopy(loads.forces)
         displacements = [0.0] * (len(structure.node) * 3)
         for (dof, displacement) in deepcopy(loads.displacements):
             displacements[dof] = displacement
@@ -320,8 +318,6 @@ class Truss(object):
             deformed['node'].extend([structure.node[i][0] + displacements[i * 3 + 0],
                                      structure.node[i][1] + displacements[i * 3 + 1],
                                      structure.node[i][2] + displacements[i * 3 + 2]])
-
-        # solution = {'deformed': deformed, 'known_displacement_a': known_displacement_a, 'displacements': displacements}
 
         # Calculating the error
         structure.error = error(self.measurement.displacements, displacements)
@@ -390,7 +386,17 @@ class Truss(object):
         return self.compile(self.guess())
 
     def guess(self):
-        return None
+        structures = []
+        delta = 0.1
+
+        for i in range(len(self.updated.element)):
+            structure = deepcopy(self.updated)
+            structure.element[i].material *= 1 - delta
+            self.solve(structure, self.boundaries, self.loads)
+            structures.append(structure)
+            print('[%.0f] error: %.02f' % (i, structure.error))
+
+        return structures
 
     def compile(self, guess):
         return self.original
