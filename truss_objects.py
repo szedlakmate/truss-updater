@@ -11,8 +11,9 @@ import math
 import numpy
 from logger import start_logging
 
-from read_input_file import read_structure_file
 from arduino_measurements import ArduinoMeasurements
+from truss_graphics import Arrow3D
+from read_input_file import read_structure_file
 
 
 def element_length(structure, index):
@@ -146,6 +147,9 @@ class StructuralData(object):
         self.element = []
         for element in element_list:
             self.element.append(Element(element[0], element[1], element[2]))
+
+    def generate_coordinate_list(self):
+        return [[self.node[x.connection[0]], self.node[x.connection[1]]] for x in self.element]
 
 
 class Boundaries(object):
@@ -365,6 +369,8 @@ class Truss(object):
             # Refine/update forces
             self.loads.forces = self.measurement.loads
 
+            self.original.element
+
             # Calculate refreshed and/or updated models
             solution_original = self.solve(self.original, self.boundaries, self.loads)
             solution_updated = self.solve(self.updated, self.boundaries, self.loads)
@@ -395,6 +401,7 @@ class Truss(object):
         return should_reset
 
     def update(self):
+        Arrow3D.plot_structure(self.original, self.updated)
         return self.compile(self.guess())
 
     def guess(self):
