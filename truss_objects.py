@@ -394,9 +394,19 @@ class Truss(object):
             structure.element[i].material *= 1 - delta
             self.solve(structure, self.boundaries, self.loads)
             structures.append(structure)
-            print('[%.0f] error: %.02f' % (i, structure.error))
+            # print('[%.0f] error: %.02f' % (i, structure.error))
 
         return structures
 
-    def compile(self, guess):
-        return self.original
+    def compile(self, guesses):
+        original_error = self.original.error
+
+        guess_errors = [x.error for x in guesses]
+
+        update = None
+
+        for index, structure in enumerate(guesses):
+            if structure.error == min(guess_errors):
+                update = structure
+                print('Error after update: %.4f' % structure.error)
+        return update
