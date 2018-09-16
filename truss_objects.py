@@ -9,6 +9,7 @@ Copyright MIT, Máté Szedlák 2016-2018.
 from copy import deepcopy
 import math
 import numpy
+from logger import start_logging
 
 from read_input_file import read_structure_file
 from arduino_measurements import ArduinoMeasurements
@@ -230,10 +231,22 @@ class Truss(object):
         :param measurements: list of measured degree of freedoms, like ['12X', '15Z']
         """
         # Labeling object
-        if title == '':
-            title = input_file.replace('.str', '')
+        if title != '':
+            self.title = title
+        else:
+            self.title = input_file.replace('.str', '')
 
-        self.title = title
+        # Initializing logger
+        self.logger = start_logging(self.title)
+
+        self.logger.info('******************************')
+        self.logger.info('    STARTING TRUSS UPDATER')
+        self.logger.info('Structure: %s' % self.title)
+        self.logger.info('Input:     %s' % input_file)
+        self.logger.info('Measured nodes:\n%s' % str(measurements))
+        self.logger.info('******************************')
+
+
 
         # Reading structural data, boundaries and loads
         (node_list, element_list, boundaries) = read_structure_file(input_file)
@@ -365,18 +378,22 @@ class Truss(object):
             self.original.error = error(self.measurement.displacements, solution_original['displacement'])
             self.updated.error = error(self.measurement.displacements, solution_updated['displacement'])
 
-            print('Error: %.2f' % self.updated.error)
+            self.logger.info('Original structure\'s error: %.4f' % self.original.error)
+            self.logger.info('Updated  structure\'s error: %.4f' % self.updated.error)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
             else:
                 self.updated = deepcopy(self.original)
-                print('Reset structure')
+                self.logger.warn('Reset structure')
 
     def should_reset(self):
         should_reset = False
 
         if self.updated.error > self.original.error:
+            self.logger.debug('The updated structure\'s error is higher than the original\'s one:')
+            self.logger.debug('updated: %.4f original: %.4f\n' % (self.updated.error, self.original.error))
+
             should_reset = True
 
         return should_reset

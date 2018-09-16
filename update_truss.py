@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--input", metavar='str', type=str, default="",
                         help="Input file, stored in the ./Structure folder [*.str]", required=True)
 
-    parser.add_argument('-m', '--measurements', nargs='+', help='Enlist the measured nodes as: 12X 14Z', required=True)
+    parser.add_argument('-m', '--measurements', nargs='+', help='Enlist the measured nodes like: 12X 14Z', required=True)
 
     #parser.add_argument("-s", "--simulation", metavar='int', type=int, choices=range(2), default=0, help="0: No|1: Yes")
 
