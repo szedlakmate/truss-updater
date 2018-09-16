@@ -8,7 +8,6 @@ Copyright MIT, Máté Szedlák 2016-2018.
 
 from copy import deepcopy
 import math
-
 import numpy
 
 from read_input_file import read_structure_file
@@ -229,7 +228,6 @@ class Truss(object):
         :param input_file: file with structural data
         :param title: title of the project
         :param measurements: list of measured degree of freedoms, like ['12X', '15Z']
-        :param simulation:
         """
         # Labeling object
         if title == '':
@@ -279,7 +277,6 @@ class Truss(object):
                 'known_displacement_a': known_displacement_a}
 
     def solve(self, structure, boundaries, loads):
-
         # Calculate stiffness-matrix
         stiffness_matrix = calculate_stiffness_matrix(structure)
 
@@ -292,7 +289,6 @@ class Truss(object):
         for (dof, force) in deepcopy(loads.forces):
             forces[dof] = force
 
-        # deepcopy(loads.forces)
         displacements = [0.0] * (len(structure.node) * 3)
         for (dof, displacement) in deepcopy(loads.displacements):
             displacements[dof] = displacement
@@ -321,8 +317,6 @@ class Truss(object):
             deformed['node'].extend([structure.node[i][0] + displacements[i * 3 + 0],
                                      structure.node[i][1] + displacements[i * 3 + 1],
                                      structure.node[i][2] + displacements[i * 3 + 2]])
-
-        # solution = {'deformed': deformed, 'known_displacement_a': known_displacement_a, 'displacements': displacements}
 
         # Calculating the error
         structure.error = error(self.measurement.displacements, displacements)
@@ -391,7 +385,35 @@ class Truss(object):
         return self.compile(self.guess())
 
     def guess(self):
-        return None
+        structures = []
+        delta = 0.1
 
-    def compile(self, guess):
-        return self.original
+        for i in range(len(self.updated.element)):
+            structure = deepcopy(self.updated)
+            structure.element[i].material *= 1 - delta
+            self.solve(structure, self.boundaries, self.loads)
+
+            if structure.error > self.original.error:
+                # Modification resulted worse result: turn effect backward
+                previous_error = structure.error
+                structure.element[i].material *= (1 + delta)/(1 - delta)
+                self.solve(structure, self.boundaries, self.loads)
+                print('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
+
+            structures.append(structure)
+            # print('[%.0f] error: %.02f' % (i, structure.error))
+
+        return structures
+
+    def compile(self, guesses):
+        original_error = self.original.error
+
+        guess_errors = [x.error for x in guesses]
+
+        update = None
+
+        for index, structure in enumerate(guesses):
+            if structure.error == min(guess_errors):
+                update = structure
+                print('Error after update: %.4f' % structure.error)
+        return update
