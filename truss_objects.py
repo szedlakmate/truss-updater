@@ -9,6 +9,7 @@ Copyright MIT, Máté Szedlák 2016-2018.
 from copy import deepcopy
 import math
 import numpy
+from logger import start_logging
 
 from read_input_file import read_structure_file
 from arduino_measurements import ArduinoMeasurements
@@ -230,10 +231,22 @@ class Truss(object):
         :param measurements: list of measured degree of freedoms, like ['12X', '15Z']
         """
         # Labeling object
-        if title == '':
-            title = input_file.replace('.str', '')
+        if title != '':
+            self.title = title
+        else:
+            self.title = input_file.replace('.str', '')
 
-        self.title = title
+        # Initializing logger
+        self.logger = start_logging(self.title)
+
+        self.logger.info('*******************************************************')
+        self.logger.info('              STARTING TRUSS UPDATER')
+        self.logger.info('Structure: %s' % self.title)
+        self.logger.info('Input:     %s' % input_file)
+        self.logger.info('Measured nodes: %s' % str(measurements))
+        self.logger.info('*******************************************************\n')
+
+
 
         # Reading structural data, boundaries and loads
         (node_list, element_list, boundaries) = read_structure_file(input_file)
@@ -249,6 +262,7 @@ class Truss(object):
 
         # Setup Input
         self.measurement = ArduinoMeasurements(measurements)
+        self.logger.debug("Calibration is mocked: set to 0")
 
         # Initiating updated structure
         self.updated = deepcopy(self.original)
@@ -346,13 +360,19 @@ class Truss(object):
         #return stress_color
 
     def start_model_updating(self):
+        self.logger.info('Start model updating\n')
         loop_counter = 0
+        total_counter = 0
 
-        while True and loop_counter < 10:
+        while True and total_counter < 20:
             loop_counter += 1
+            total_counter += 1
+
+            self.logger.info('*** %i. loop ***' % loop_counter)
 
             # Read sensors
             self.measurement.update()
+            self.logger.debug('Loads are mocked: %s' % str(self.measurement.loads))
 
             # Refine/update forces
             self.loads.forces = self.measurement.loads
@@ -365,18 +385,23 @@ class Truss(object):
             self.original.error = error(self.measurement.displacements, solution_original['displacement'])
             self.updated.error = error(self.measurement.displacements, solution_updated['displacement'])
 
-            print('Error: %.2f' % self.updated.error)
+            self.logger.debug('Original structure\'s error: %.4f' % self.original.error)
+            self.logger.debug('Updated  structure\'s error: %.4f' % self.updated.error)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
             else:
                 self.updated = deepcopy(self.original)
-                print('Reset structure')
+                self.logger.warn('RESET STRUCTURE')
+                loop_counter = 0
 
     def should_reset(self):
         should_reset = False
 
         if self.updated.error > self.original.error:
+            self.logger.debug('The updated structure\'s error is higher than the original\'s one:')
+            self.logger.debug('updated: %.4f original: %.4f' % (self.updated.error, self.original.error))
+
             should_reset = True
 
         return should_reset
@@ -398,7 +423,7 @@ class Truss(object):
                 previous_error = structure.error
                 structure.element[i].material *= (1 + delta)/(1 - delta)
                 self.solve(structure, self.boundaries, self.loads)
-                print('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
+                self.logger.debug('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
 
             structures.append(structure)
             # print('[%.0f] error: %.02f' % (i, structure.error))
@@ -406,14 +431,13 @@ class Truss(object):
         return structures
 
     def compile(self, guesses):
-        original_error = self.original.error
-
         guess_errors = [x.error for x in guesses]
 
         update = None
 
         for index, structure in enumerate(guesses):
             if structure.error == min(guess_errors):
-                update = structure
-                print('Error after update: %.4f' % structure.error)
+                update = deepcopy(structure)
+                self.logger.info('Deltas:\toriginal:\t%8.4f\tprevious update:\t%8.4f\tlatest update: %8.4f' %
+                                 (self.original.error, self.updated.error, update.error))
         return update
