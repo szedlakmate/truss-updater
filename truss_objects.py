@@ -244,7 +244,7 @@ class Truss(object):
         self.logger.info('Structure: %s' % self.title)
         self.logger.info('Input:     %s' % input_file)
         self.logger.info('Measured nodes: %s' % str(measurements))
-        self.logger.info('*******************************************************\n\n')
+        self.logger.info('*******************************************************\n')
 
 
 
@@ -360,7 +360,7 @@ class Truss(object):
         #return stress_color
 
     def start_model_updating(self):
-        self.logger.info('Start model updating')
+        self.logger.info('Start model updating\n')
         loop_counter = 0
         total_counter = 0
 
@@ -392,7 +392,7 @@ class Truss(object):
                 self.updated = deepcopy(self.update())
             else:
                 self.updated = deepcopy(self.original)
-                self.logger.warn('Reset structure')
+                self.logger.warn('RESET STRUCTURE')
                 loop_counter = 0
 
     def should_reset(self):
@@ -400,7 +400,7 @@ class Truss(object):
 
         if self.updated.error > self.original.error:
             self.logger.debug('The updated structure\'s error is higher than the original\'s one:')
-            self.logger.debug('updated: %.4f original: %.4f\n' % (self.updated.error, self.original.error))
+            self.logger.debug('updated: %.4f original: %.4f' % (self.updated.error, self.original.error))
 
             should_reset = True
 
