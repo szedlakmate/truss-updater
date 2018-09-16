@@ -47,14 +47,11 @@ class ArduinoMeasurements(object):
 
         if random_limit > 0:
             random_input = fake + random.randint(-random_limit*10, +random_limit*10)/10
-            print("Randomized raw input function is mocked: %.2f" % random_input)
             return [random_input]
         else:
-            print("Raw input function is mocked: %.2f" % fake)
             return [fake]
 
     def calibrate(self):
-        print("Calibration is mocked: set to 0")
         return [0]
 
     def update(self):
@@ -66,7 +63,6 @@ class ArduinoMeasurements(object):
         Other radial displacement shall be divided into X/Y/Z directional components.
         """
         # TODO: write function for:
-        print('Loads are mocked: [25, -9.80]')
         self.loads = [[25, -9.80]]
 
         measurements = self.read_raw_input(25, 10)
