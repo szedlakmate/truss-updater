@@ -8,7 +8,6 @@ Copyright MIT, Máté Szedlák 2016-2018.
 
 from copy import deepcopy
 import math
-
 import numpy
 
 from read_input_file import read_structure_file
@@ -393,6 +392,14 @@ class Truss(object):
             structure = deepcopy(self.updated)
             structure.element[i].material *= 1 - delta
             self.solve(structure, self.boundaries, self.loads)
+
+            if structure.error > self.original.error:
+                # Modification resulted worse result: turn effect backward
+                previous_error = structure.error
+                structure.element[i].material *= (1 + delta)/(1 - delta)
+                self.solve(structure, self.boundaries, self.loads)
+                print('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
+
             structures.append(structure)
             # print('[%.0f] error: %.02f' % (i, structure.error))
 
