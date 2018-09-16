@@ -46,7 +46,7 @@ def read_structure_file(input_file):
                            "Cross-sections", "Materials", "Supports"]
 
     read_elements = {'elements': False, 'coordinates': False, 'cross-sections': False, 'materials': False,
-                     'support': False}
+                     'supports': False}
 
     try:
         setup_folder('Structures')
@@ -138,13 +138,14 @@ def read_structure_file(input_file):
         raise IOError
 
     terminate = False
-    for key, value in enumerate(read_elements):
-        if value is False:
-            print("The following was not found: " + key)
+    error_message_template = 'The following was not found: '
+    for element in read_elements:
+        if read_elements[element] is False:
+            error_message_template += element + ' '
             terminate = True
 
     if terminate:
-        raise Exception
+        raise Exception(error_message_template)
 
     node_list = structure['coordinates']
     element_list = structure['elements']

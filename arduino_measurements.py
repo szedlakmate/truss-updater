@@ -65,7 +65,7 @@ class ArduinoMeasurements(object):
         # TODO: write function for:
         self.loads = [[25, -9.80]]
 
-        measurements = self.read_raw_input(25, 10)
+        measurements = self.read_raw_input(25, 0)
 
         self.displacements = [[self.id_list[i], self.initial_measurements[i] - measurements[i]]
                               for i in range(len(self.id_list))]

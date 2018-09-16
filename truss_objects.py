@@ -237,7 +237,7 @@ class Truss(object):
             self.title = input_file.replace('.str', '')
 
         # Initializing logger
-        self.logger = start_logging(self.title)
+        self.logger = start_logging(True, self.title)
 
         self.logger.info('*******************************************************')
         self.logger.info('              STARTING TRUSS UPDATER')
@@ -245,8 +245,6 @@ class Truss(object):
         self.logger.info('Input:     %s' % input_file)
         self.logger.info('Measured nodes: %s' % str(measurements))
         self.logger.info('*******************************************************\n')
-
-
 
         # Reading structural data, boundaries and loads
         (node_list, element_list, boundaries) = read_structure_file(input_file)
@@ -293,24 +291,25 @@ class Truss(object):
     def solve(self, structure, boundaries, loads):
         # Calculate stiffness-matrix
         stiffness_matrix = calculate_stiffness_matrix(structure)
+        
+        dof_number = len(structure.node) * 3
 
         helper = self.solver_helper(structure)
         known_f_a = helper['known_f_a']
 
         constraints = deepcopy(boundaries.supports)
 
-        forces = [0] * (len(structure.node) * 3 - len(constraints))
+        forces = [0] * (dof_number - len(constraints))
         for (dof, force) in deepcopy(loads.forces):
             forces[dof] = force
 
-        displacements = [0.0] * (len(structure.node) * 3)
+        displacements = [0.0] * dof_number
         for (dof, displacement) in deepcopy(loads.displacements):
             displacements[dof] = displacement
 
-        stiff_new = [[0.0] * (len(structure.node) * 3 - len(constraints))] * \
-                    (len(structure.node) * 3 - len(constraints))
+        stiff_new = [[0.0] * (dof_number - len(constraints))] * (dof_number - len(constraints))
 
-        stiffness_increment = [0.0] * (len(structure.node) * 3 - len(constraints))
+        stiffness_increment = [0.0] * (dof_number - len(constraints))
 
         for i, kfai in enumerate(known_f_a):
             for j, kfaj in enumerate(known_f_a):
@@ -337,6 +336,7 @@ class Truss(object):
 
         return deformed
 
+    """
     def post_process(self, truss, loads, boundaries, solution):
 
         stiffness_matrix = calculate_stiffness_matrix(truss)
@@ -345,19 +345,7 @@ class Truss(object):
         known_displacement_a = helper['known_displacement_a']
 
         # Calculates reaction forces and stresses
-        for i in known_displacement_a:
-            loads.forces[i] = 0
-            for j, displacement in enumerate(solution.displacements):
-                loads.forces[i] += stiffness_matrix[i][j]*displacement
-
-        stress = []
-
-        #s_max = max([abs(min(self.stress)), max(self.stress), 0.000000001])
-
-        # TODO: Should be written out using a function
-        #stress_color = [float(x)/float(s_max) for x in self.stress]
-
-        #return stress_color
+    """
 
     def start_model_updating(self):
         self.logger.info('Start model updating\n')
@@ -385,8 +373,8 @@ class Truss(object):
             self.original.error = error(self.measurement.displacements, solution_original['displacement'])
             self.updated.error = error(self.measurement.displacements, solution_updated['displacement'])
 
-            self.logger.debug('Original structure\'s error: %.4f' % self.original.error)
-            self.logger.debug('Updated  structure\'s error: %.4f' % self.updated.error)
+            self.logger.debug('Original structure\'s error: %.3f' % self.original.error)
+            self.logger.debug('Updated  structure\'s error: %.3f' % self.updated.error)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
@@ -400,7 +388,7 @@ class Truss(object):
 
         if self.updated.error > self.original.error:
             self.logger.debug('The updated structure\'s error is higher than the original\'s one:')
-            self.logger.debug('updated: %.4f original: %.4f' % (self.updated.error, self.original.error))
+            self.logger.debug('updated: %.3f original: %.3f' % (self.updated.error, self.original.error))
 
             should_reset = True
 
@@ -426,7 +414,6 @@ class Truss(object):
                 self.logger.debug('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
 
             structures.append(structure)
-            # print('[%.0f] error: %.02f' % (i, structure.error))
 
         return structures
 
@@ -438,6 +425,6 @@ class Truss(object):
         for index, structure in enumerate(guesses):
             if structure.error == min(guess_errors):
                 update = deepcopy(structure)
-                self.logger.info('Deltas:\toriginal:\t%8.4f\tprevious update:\t%8.4f\tlatest update: %8.4f' %
-                                 (self.original.error, self.updated.error, update.error))
+                self.logger.info('Delta:\t%7.3f \t(original:\t%7.3f)' %
+                                 (update.error, self.original.error))
         return update
