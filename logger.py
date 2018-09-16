@@ -14,11 +14,11 @@ def start_logging(label=''):
 
     # create console handler with a higher log level
     ch = logging.StreamHandler()
-    ch.setLevel(logging.WARN)
+    ch.setLevel(logging.INFO)
 
     # create formatter and add it to the handlers
     file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    console_formatter = logging.Formatter('%(message)s')
 
     fh.setFormatter(file_formatter)
     ch.setFormatter(console_formatter)
