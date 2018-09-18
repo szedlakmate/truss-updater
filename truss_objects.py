@@ -356,7 +356,7 @@ class Truss(object):
         loop_counter = 0
         total_counter = 0
 
-        while True and total_counter < 20:
+        while True and total_counter < 1:
             loop_counter += 1
             total_counter += 1
 
@@ -401,7 +401,7 @@ class Truss(object):
         return should_reset
 
     def update(self):
-        Arrow3D.plot_structure(self.original, self.updated)
+        Arrow3D.plot_structure(self.original, self.updated, 2)
         return self.compile(self.guess())
 
     def guess(self):

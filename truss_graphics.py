@@ -38,13 +38,35 @@ class Arrow3D(FancyArrowPatch):
         fig = pyplot.figure()
         _ax = fig.add_subplot(111, projection='3d')
 
-        for line in original.generate_coordinate_list():
-            # Plot original structure
-            if original:
-                _ax.plot(line[0], line[1],  color='b')
+        if dof == 2:
+            _ax.view_init(elev=90., azim=-90.)
+            _ax.w_zaxis.line.set_lw(0.)
+            _ax.set_zticklabels([])
+
+        fig.set_size_inches(100, 10)
+
+
+        # Plot original structure
+        coordinates = original.generate_coordinate_list()
+        if dof == 3:
+            _ax.plot([x[0][0] for x in coordinates],
+                     [x[0][1] for x in coordinates],
+                     zs=[x[0][2] for x in coordinates],  color='b')
+
+        else:
+            _ax.plot([x[0][0] for x in coordinates],
+                     [x[0][1] for x in coordinates], color='b')
+
+        i = 0
+        for node in original.node:
+            _ax.text(node[0], node[1], node[2], str(i), fontsize=12,
+                     horizontalalignment='right')
+            i += 1
 
         path = None
         plotname = 'test-print'
+
+        plt.show()
 
         # pyplot.show()
         if save_plot:
