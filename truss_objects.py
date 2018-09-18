@@ -401,10 +401,12 @@ class Truss(object):
         return should_reset
 
     def update(self):
-        Arrow3D.plot_structure(self.original, self.updated, 2)
+        self.logger.debug('Update')
+        Arrow3D.plot_structure(self.original, result=self.updated, dof=2, save=True, show=True)
         return self.compile(self.guess())
 
     def guess(self):
+        self.logger.debug('Guess')
         structures = []
         delta = 0.1
 
@@ -425,6 +427,7 @@ class Truss(object):
         return structures
 
     def compile(self, guesses):
+        self.logger.debug('Compile')
         guess_errors = [x.error for x in guesses]
 
         update = None
