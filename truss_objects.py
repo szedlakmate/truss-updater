@@ -379,9 +379,6 @@ class Truss(object):
             self.original.error = error(self.measurement.displacements, solution_original['displacement'])
             self.updated.error = error(self.measurement.displacements, solution_updated['displacement'])
 
-            self.logger.debug('Original structure\'s error: %.3f' % self.original.error)
-            self.logger.debug('Updated  structure\'s error: %.3f' % self.updated.error)
-
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
             else:
@@ -402,7 +399,7 @@ class Truss(object):
 
     def update(self):
         self.logger.debug('Update')
-        Arrow3D.plot_structure(self.original, result=self.updated, dof=2, save=True, show=True)
+        Arrow3D.plot_structure(self.original, result=self.updated, dof=2, save=True, show=False)
         return self.compile(self.guess())
 
     def guess(self):
