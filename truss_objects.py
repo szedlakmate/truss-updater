@@ -411,15 +411,9 @@ class Truss(object):
             # Refine/update forces
             self.loads.forces = self.measurement.loads
 
-            self.original.element
-
             # Calculate refreshed and/or updated models
-            solution_original = self.solve(self.original, self.boundaries, self.loads)
-            solution_updated = self.solve(self.updated, self.boundaries, self.loads)
-
-            # Calculate errors
-            self.original.error = error(self.measurement.displacements, solution_original['displacement'])
-            self.updated.error = error(self.measurement.displacements, solution_updated['displacement'])
+            self.solve(self.original, self.boundaries, self.loads)
+            self.solve(self.updated, self.boundaries, self.loads)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
