@@ -17,6 +17,13 @@ from read_input_file import read_structure_file
 
 
 def element_length(structure, index):
+    """
+    Return the length of the index-th element in a Structure
+
+    :param structure: Structure object
+    :param index: the index of the target element
+    :return: the length of the index-th element
+    """
     return math.sqrt(sum([(j - k) ** 2 for j, k
                           in zip(structure.node[structure.element[index].connection[1]],
                                  structure.node[structure.element[index].connection[0]])]))
@@ -24,7 +31,11 @@ def element_length(structure, index):
 
 def error(measurements, calculated_displacements):
     """
-    Error function using least-square method
+    Sum of errors using least-square method
+
+    This function returns a scalar as the error of the truss. The error is the difference between the calculated
+    and the measured displacements. The errors are measured on the measurement points. The number and the location
+    of measurement points are essential. Wrongly chosen measurements might cause bad behavior during convergence.
 
     :param measurements: [[DOF ID, displacement], ...]
     :param calculated_displacements: [1. DOF's displacement, 2. DOF's displacement, ...]
@@ -129,9 +140,7 @@ class StructuralData(object):
         - cross-section [m^2]
         :param label: title of the structure
         """
-        # Reset error of the structure - according to the measurements
         self.error = 0
-
         self.label = label
 
         # Build node list
@@ -149,6 +158,11 @@ class StructuralData(object):
             self.element.append(Element(element[0], element[1], element[2]))
 
     def generate_coordinate_list(self):
+        """
+        Extracts coordinate list from Structure element
+
+        :return: [1. connection [1. node [X, Y, Z], 2. node [X, Y, Z]], 2. connection [[], []], ...]
+        """
         return [[self.node[x.connection[0]], self.node[x.connection[1]]] for x in self.element]
 
 
@@ -172,10 +186,11 @@ class Loads(object):
         Load model
 
         :param loads:
-            * displacements: [ID, displacement m] - DOF ID
+            * displacements: [ID, displacement m] - DOF ID - NOT IMPLEMENTED
             * forces: [ID, force KN] - DOF ID
-            * stresses: [ID, stress] - element ID
+            * stresses: [ID, stress] - element ID - NOT IMPLEMENTED
         """
+        # TODO: implement displacements and stresses as loads
 
         self.displacements = []
         if 'displacements' in loads:
@@ -215,6 +230,7 @@ class Solution(object):
     * reaction [ID, force KN] - DOF ID
     * stress [ID, stress] - element ID
     """
+    # TODO: refactor to result a Structure instead of non-standard arrays
     def __init__(self, number_of_nodes):
         """
         :param number_of_nodes: used for vector length calculation
@@ -270,6 +286,12 @@ class Truss(object):
         self.updated = deepcopy(self.original)
 
     def solver_helper(self, structure):
+        """
+        Solver helper. Should be refactored/deprecated.
+
+        :param structure: Structure object
+        :return: { known_f_a, known_f_not_zero, known_displacement_a }
+        """
         # Setting known forces
         known_f_a = []
         known_f_not_zero = []
@@ -293,6 +315,14 @@ class Truss(object):
                 'known_displacement_a': known_displacement_a}
 
     def solve(self, structure, boundaries, loads):
+        """
+        Main solver. Calculates displacements for a given structure + loads + boundaries combination.
+
+        :param structure: Structure object pointer. Sets the error of the structure according to self.measurements
+        :param boundaries: Boundaries object
+        :param loads: Loads object
+        :return: returns an non-standardized array of deformations
+        """
         # Calculate stiffness-matrix
         stiffness_matrix = calculate_stiffness_matrix(structure)
         
@@ -340,6 +370,7 @@ class Truss(object):
 
         return deformed
 
+    # TODO: implement post-process features as stress calculation
     """
     def post_process(self, truss, loads, boundaries, solution):
 
@@ -351,12 +382,23 @@ class Truss(object):
         # Calculates reaction forces and stresses
     """
 
-    def start_model_updating(self):
+    def start_model_updating(self, max_iteration=0):
+        """
+        Starting main model updating process:
+            - Read displacements and loads from sensors
+            - Calculate refreshed and/or updated model including the error based on self.measurements.
+            - Check reset condition
+
+        :param: max_iteration: Sets the maximum number of updates. If 0, the iteration number is unlimited.
+
+        :return: None
+        """
         self.logger.info('Start model updating\n')
         loop_counter = 0
         total_counter = 0
 
-        while True and total_counter < 1:
+        # If
+        while True and (total_counter < max_iteration or max_iteration == 0):
             loop_counter += 1
             total_counter += 1
 
@@ -369,15 +411,9 @@ class Truss(object):
             # Refine/update forces
             self.loads.forces = self.measurement.loads
 
-            self.original.element
-
             # Calculate refreshed and/or updated models
-            solution_original = self.solve(self.original, self.boundaries, self.loads)
-            solution_updated = self.solve(self.updated, self.boundaries, self.loads)
-
-            # Calculate errors
-            self.original.error = error(self.measurement.displacements, solution_original['displacement'])
-            self.updated.error = error(self.measurement.displacements, solution_updated['displacement'])
+            self.solve(self.original, self.boundaries, self.loads)
+            self.solve(self.updated, self.boundaries, self.loads)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
@@ -387,6 +423,11 @@ class Truss(object):
                 loop_counter = 0
 
     def should_reset(self):
+        """
+        Checks reset condition
+
+        :return: Boolean
+        """
         should_reset = False
 
         if self.updated.error > self.original.error:
@@ -398,11 +439,21 @@ class Truss(object):
         return should_reset
 
     def update(self):
+        """
+        Returns updated Structure
+
+        :return: Structure object
+        """
         self.logger.debug('Update')
         Arrow3D.plot_structure(self.original, result=self.updated, dof=2, save=True, show=False)
         return self.compile(self.guess())
 
     def guess(self):
+        """
+        Returns an array of possible modifications
+
+        :return:
+        """
         self.logger.debug('Guess')
         structures = []
         delta = 0.1
@@ -424,6 +475,12 @@ class Truss(object):
         return structures
 
     def compile(self, guesses):
+        """
+        Compiles the best updated Structure based on the guesses.
+
+        :param guesses:
+        :return: Structure object
+        """
         self.logger.debug('Compile')
         guess_errors = [x.error for x in guesses]
 
