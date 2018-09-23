@@ -382,7 +382,7 @@ class Truss(object):
         # Calculates reaction forces and stresses
     """
 
-    def start_model_updating(self):
+    def start_model_updating(self, max_iteration=0):
         """
         Starting main model updating process:
             - Read displacements and loads from sensors
@@ -397,7 +397,8 @@ class Truss(object):
         loop_counter = 0
         total_counter = 0
 
-        while True and total_counter < 1:
+        # If
+        while True and (total_counter < max_iteration or max_iteration == 0):
             loop_counter += 1
             total_counter += 1
 
