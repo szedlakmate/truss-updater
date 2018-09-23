@@ -1,5 +1,6 @@
 # Personal
 .idea/
+Results/*
 
 # Pytest
 .pytest_cache
