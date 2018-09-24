@@ -23,7 +23,7 @@ if __name__ == '__main__':
                         help='Enlist the measured nodes like: 12X 14Z', required=True)
 
     parser.add_argument('-g', action='store_true',
-                        help='Turns on graphical features', required=False, default=False)
+                        help='Turns on graphical features', required=False)
 
     # parser.add_argument("-s", "--simulation", metavar='int', type=int,
     # choices=range(2), default=0, help="0: No|1: Yes")

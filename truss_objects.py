@@ -241,7 +241,7 @@ class Solution(object):
 
 
 class Truss(object):
-    def __init__(self, input_file, title, measurements, graphics):
+    def __init__(self, input_file, title, measurements, graphics=False):
         """
         Main container
 
