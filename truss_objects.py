@@ -397,7 +397,6 @@ class Truss(object):
         loop_counter = 0
         total_counter = 0
 
-        # If
         while True and (total_counter < max_iteration or max_iteration == 0):
             loop_counter += 1
             total_counter += 1
@@ -445,7 +444,7 @@ class Truss(object):
         :return: Structure object
         """
         self.logger.debug('Update')
-        Arrow3D.plot_structure(self.original, result=self.updated, dof=2, save=True, show=False)
+        # Arrow3D.plot_structure(self.original, result=self.updated, dof=2, save=True, show=False)
         return self.compile(self.guess())
 
     def guess(self):
