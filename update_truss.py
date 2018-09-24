@@ -22,6 +22,9 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--measurements', nargs='+',
                         help='Enlist the measured nodes like: 12X 14Z', required=True)
 
+    parser.add_argument('-g', action='store_true',
+                        help='Turns on graphical features', required=False, default=False)
+
     # parser.add_argument("-s", "--simulation", metavar='int', type=int,
     # choices=range(2), default=0, help="0: No|1: Yes")
 
@@ -29,6 +32,6 @@ if __name__ == '__main__':
 
     # Define new structure
     Truss = Truss(input_file='%s.str' % args.input.replace('.str', ''), title=args.title,
-                  measurements=args.measurements)
+                  measurements=args.measurements, graphics=args.g)
 
     Truss.start_model_updating(10)
