@@ -12,7 +12,7 @@ import numpy
 from logger import start_logging
 
 from arduino_measurements import ArduinoMeasurements
-from truss_graphics import Arrow3D
+from truss_graphics import animate, Arrow3D
 from read_input_file import read_structure_file
 
 
@@ -330,7 +330,7 @@ class Truss(object):
 
         # Calculate stiffness-matrix
         stiffness_matrix = calculate_stiffness_matrix(structure)
-        
+
         dof_number = len(structure.node) * 3
 
         helper = self.solver_helper(structure)
@@ -392,9 +392,6 @@ class Truss(object):
         counter = {'total': 0, 'loop': 0}
 
         while True and (counter['total'] < max_iteration or max_iteration == 0):
-            counter['loop'] += 1
-            counter['total'] += 1
-
             self.logger.info('*** %i. loop ***' % counter['loop'])
 
             # Read sensors
@@ -410,14 +407,20 @@ class Truss(object):
 
             # Draw
             if self.options['graphics']:
-                Arrow3D.plot_structure(self.original, deformed, counter=counter)
+                Arrow3D.plot_structure(self.original, deformed, counter=counter, title=self.title)
+
+            counter['loop'] += 1
+            counter['total'] += 1
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
             else:
                 self.updated = deepcopy(self.original)
                 self.logger.warn('RESET STRUCTURE')
-                loop_counter = 0
+                counter['loop'] = 0
+
+        if self.options['graphics']:
+            animate(self.title, counter['total'])
 
     def should_reset(self):
         """

@@ -7,10 +7,26 @@ https://stackoverflow.com/questions/29188612/arrows-in-matplotlib-using-mplot3d
 https://gist.github.com/jpwspicer/ea6d20e4d8c54e9daabbc1daabbdc027
 """
 from copy import deepcopy
+import imageio
 import math
 from matplotlib import pyplot as plt
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
+
+
+def animate(title, maximum):
+    """
+        GIF creator
+
+        :param title:
+        :param maximum:
+        :return: None
+        """
+    images = []
+
+    [images.append(imageio.imread('./Results/%s - %i.png' % (title, i))) for i in range(maximum)]
+
+    imageio.mimsave('./Results/%s.gif' % title, images, duration=0.33)
 
 
 def scale_displacement(base, result, scale=1.0):
@@ -72,7 +88,8 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.draw(self, renderer)
 
     def plot_structure(base, result=None, supports=True, loads=None, reactions=False, values=False,
-                       save=True, show=False, node_number=False, animate=False, counter=None):
+                       save=True, show=False, node_number=False, animate=False, counter=None, title='test'):
+        stresses = None
 
         if result is None:
             structure = base
@@ -98,7 +115,6 @@ class Arrow3D(FancyArrowPatch):
         if result:
             stresses = post_process(base, result)
 
-
         # Plot structure
         index = 0
         rgb_col = 'b'
@@ -123,14 +139,12 @@ class Arrow3D(FancyArrowPatch):
                          horizontalalignment='right')
                 i += 1
 
-        plotname = 'test-print'
-
         if show:
             plt.show()
 
         if save:
             if counter is None:
-                fig.savefig('./Results/%s.png' % plotname)
+                fig.savefig('./Results/%s.png' % title)
             else:
-                fig.savefig('./Results/%s - %i.png' % (plotname, counter['total']))
+                fig.savefig('./Results/%s - %i.png' % (title, counter['total']))
 
