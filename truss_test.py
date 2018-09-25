@@ -84,13 +84,10 @@ class TestBridgeCalculations(object):
 
         assert new_stiffness_matrix == BRIDGE_STIFFNESS_MATRIX
 
-    def test_2d_structural_z_displacement(self):
+    def test_2d_structural_z_displacement(self, BRIDGE):
         """Test whether 2D structures Z-displacement is blocked automatically"""
-        bridge = Truss('bridge.str', 'test', ['11Y'])
-
-        deformed = bridge.solve(bridge.original, bridge.boundaries, bridge.loads)
-
-        z_total = sum([deformed['node'][x] if x % 3 == 2 else 0 for x in range(len(deformed['node']))])
+        deformed = BRIDGE.solve(BRIDGE.original, BRIDGE.boundaries, BRIDGE.loads)
+        z_total = sum([x[2] for x in deformed.node])
 
         assert z_total == 0
 

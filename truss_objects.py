@@ -12,13 +12,13 @@ import numpy
 from logger import start_logging
 
 from arduino_measurements import ArduinoMeasurements
-from truss_graphics import Arrow3D
+from truss_graphics import animate, Arrow3D
 from read_input_file import read_structure_file
 
 
 def element_length(structure, index):
     """
-    Return the length of the index-th element in a Structure
+    Returns the length of the index-th element in a Structure
 
     :param structure: Structure object
     :param index: the index of the target element
@@ -146,12 +146,11 @@ class StructuralData(object):
         # Build node list
         self.node = []
         for node in node_list:
-            if type(node) is list and len(node) == 3 and type(node[0]) is float and type(node[1]) is float \
-                    and type(node[2]) is float:
+            if type(node) is list and len(node) == 3:
                 self.node.append(node)
             else:
-                raise TypeError('Nodal data is corrupt.\nType should be [float, float, float] but found:\n%s'
-                                % str(node))
+                raise TypeError('Nodal data is corrupt.\nType should be [float, float, float] but found:\n%s as %s'
+                                % (str([type(x) for x in node]), str(node)))
         # Build element list
         self.element = []
         for element in element_list:
@@ -242,7 +241,7 @@ class Solution(object):
 
 
 class Truss(object):
-    def __init__(self, input_file, title, measurements):
+    def __init__(self, input_file, title, measurements, graphics=False):
         """
         Main container
 
@@ -265,6 +264,8 @@ class Truss(object):
         self.logger.info('Input:     %s' % input_file)
         self.logger.info('Measured nodes: %s' % str(measurements))
         self.logger.info('*******************************************************\n')
+
+        self.options = {'graphics': graphics}
 
         # Reading structural data, boundaries and loads
         (node_list, element_list, boundaries) = read_structure_file(input_file)
@@ -314,18 +315,22 @@ class Truss(object):
                 'known_f_not_zero': known_f_not_zero,
                 'known_displacement_a': known_displacement_a}
 
-    def solve(self, structure, boundaries, loads):
+    def solve(self, structure, boundaries, loads, label=''):
         """
         Main solver. Calculates displacements for a given structure + loads + boundaries combination.
 
         :param structure: Structure object pointer. Sets the error of the structure according to self.measurements
         :param boundaries: Boundaries object
         :param loads: Loads object
+        :param label: label for solution return value
         :return: returns an non-standardized array of deformations
         """
+        if label == '':
+            label = 'result'
+
         # Calculate stiffness-matrix
         stiffness_matrix = calculate_stiffness_matrix(structure)
-        
+
         dof_number = len(structure.node) * 3
 
         helper = self.solver_helper(structure)
@@ -357,30 +362,20 @@ class Truss(object):
         for i, known_f_a in enumerate(known_f_a):
             displacements[known_f_a] = dis_new[i]
 
-        deformed = {'node': [], 'displacement': displacements}
+        node = []
 
         # Deformed shape
         for i in range(len(structure.node)):
-            deformed['node'].extend([structure.node[i][0] + displacements[i * 3 + 0],
-                                     structure.node[i][1] + displacements[i * 3 + 1],
-                                     structure.node[i][2] + displacements[i * 3 + 2]])
+            node.append([structure.node[i][0] + displacements[i * 3 + 0],
+                         structure.node[i][1] + displacements[i * 3 + 1],
+                         structure.node[i][2] + displacements[i * 3 + 2]])
 
         # Calculating the error
         structure.error = error(self.measurement.displacements, displacements)
 
+        deformed = StructuralData(node, [[x.connection, x.material, x.section] for x in structure.element], label)
+
         return deformed
-
-    # TODO: implement post-process features as stress calculation
-    """
-    def post_process(self, truss, loads, boundaries, solution):
-
-        stiffness_matrix = calculate_stiffness_matrix(truss)
-
-        helper = self.solver_helper(truss)
-        known_displacement_a = helper['known_displacement_a']
-
-        # Calculates reaction forces and stresses
-    """
 
     def start_model_updating(self, max_iteration=0):
         """
@@ -394,14 +389,10 @@ class Truss(object):
         :return: None
         """
         self.logger.info('Start model updating\n')
-        loop_counter = 0
-        total_counter = 0
+        counter = {'total': 0, 'loop': 0}
 
-        while True and (total_counter < max_iteration or max_iteration == 0):
-            loop_counter += 1
-            total_counter += 1
-
-            self.logger.info('*** %i. loop ***' % loop_counter)
+        while True and (counter['total'] < max_iteration or max_iteration == 0):
+            self.logger.info('*** %i. loop ***' % counter['loop'])
 
             # Read sensors
             self.measurement.update()
@@ -412,14 +403,24 @@ class Truss(object):
 
             # Calculate refreshed and/or updated models
             self.solve(self.original, self.boundaries, self.loads)
-            self.solve(self.updated, self.boundaries, self.loads)
+            deformed = self.solve(self.updated, self.boundaries, self.loads)
+
+            # Draw
+            if self.options['graphics']:
+                Arrow3D.plot_structure(self.original, deformed, counter=counter, title=self.title)
+
+            counter['loop'] += 1
+            counter['total'] += 1
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
             else:
                 self.updated = deepcopy(self.original)
                 self.logger.warn('RESET STRUCTURE')
-                loop_counter = 0
+                counter['loop'] = 0
+
+        if self.options['graphics']:
+            animate(self.title, counter['total'])
 
     def should_reset(self):
         """
