@@ -18,7 +18,7 @@ from read_input_file import read_structure_file
 
 def element_length(structure, index):
     """
-    Return the length of the index-th element in a Structure
+    Returns the length of the index-th element in a Structure
 
     :param structure: Structure object
     :param index: the index of the target element
@@ -377,26 +377,6 @@ class Truss(object):
 
         return deformed
 
-    # TODO: implement post-process features as stress calculation
-    def post_process(self, original, deformed):
-        stresses = []
-        stress_ratio = []
-
-        for i in range(len(original.element)):
-            stress = -(element_length(deformed[i]) - element_length(original[i])) /\
-                     element_length(original[i]) * original.element[i][1] * original.element[i][2]
-
-            stresses.append(stress)
-
-        for stress in stresses:
-            if stress > 0:
-                ratio = stress / max(stresses)
-            else:
-                ratio = -stress / min(stresses)
-            stress_ratio.append(ratio)
-
-        return {'stress': stresses, 'ratio': stress_ratio}
-
     def start_model_updating(self, max_iteration=0):
         """
         Starting main model updating process:
@@ -431,7 +411,7 @@ class Truss(object):
 
             # Draw
             if self.options['graphics']:
-                Arrow3D.plot_structure(self.original, deformed, )
+                Arrow3D.plot_structure(self.original, deformed)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
