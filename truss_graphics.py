@@ -72,7 +72,7 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.draw(self, renderer)
 
     def plot_structure(base, result=None, supports=True, loads=None, reactions=False, values=False,
-                       save=True, show=False, node_number=False, animate=False):
+                       save=True, show=False, node_number=False, animate=False, counter=None):
 
         if result is None:
             structure = base
@@ -129,4 +129,8 @@ class Arrow3D(FancyArrowPatch):
             plt.show()
 
         if save:
-            fig.savefig('./Results/%s.png' % plotname)
+            if counter is None:
+                fig.savefig('./Results/%s.png' % plotname)
+            else:
+                fig.savefig('./Results/%s - %i.png' % (plotname, counter['total']))
+

@@ -389,14 +389,13 @@ class Truss(object):
         :return: None
         """
         self.logger.info('Start model updating\n')
-        loop_counter = 0
-        total_counter = 0
+        counter = {'total': 0, 'loop': 0}
 
-        while True and (total_counter < max_iteration or max_iteration == 0):
-            loop_counter += 1
-            total_counter += 1
+        while True and (counter['total'] < max_iteration or max_iteration == 0):
+            counter['loop'] += 1
+            counter['total'] += 1
 
-            self.logger.info('*** %i. loop ***' % loop_counter)
+            self.logger.info('*** %i. loop ***' % counter['loop'])
 
             # Read sensors
             self.measurement.update()
@@ -411,7 +410,7 @@ class Truss(object):
 
             # Draw
             if self.options['graphics']:
-                Arrow3D.plot_structure(self.original, deformed)
+                Arrow3D.plot_structure(self.original, deformed, counter=counter)
 
             if self.should_reset() is False:
                 self.updated = deepcopy(self.update())
