@@ -389,6 +389,7 @@ class Truss(object):
         :return: None
         """
         self.logger.info('Start model updating\n')
+        active_figure = None
         counter = {'total': 0, 'loop': 0}
 
         while True and (counter['total'] < max_iteration or max_iteration == 0):
@@ -407,7 +408,8 @@ class Truss(object):
 
             # Draw
             if self.options['graphics']:
-                Arrow3D.plot_structure(self.original, deformed, counter=counter, title=self.title)
+                active_figure = Arrow3D.plot_structure(self.original, deformed, counter=counter, title=self.title,
+                                                       fig=active_figure, show=True)
 
             counter['loop'] += 1
             counter['total'] += 1
@@ -445,7 +447,6 @@ class Truss(object):
         :return: Structure object
         """
         self.logger.debug('Update')
-        # Arrow3D.plot_structure(self.original, result=self.updated, dof=2, save=True, show=False)
         return self.compile(self.guess())
 
     def guess(self):
