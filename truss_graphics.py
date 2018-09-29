@@ -60,9 +60,15 @@ def post_process(original, deformed):
 
     for stress in stresses:
         if stress > 0:
-            ratio = stress / max(stresses)
+            if max(stresses) > 0:
+                ratio = stress / max(stresses)
+            else:
+                ratio = 0
         else:
-            ratio = -stress / min(stresses)
+            if max(stresses) > 0:
+                ratio = -stress / min(stresses)
+            else:
+                ratio = 0
         stress_ratio.append(ratio)
 
     return {'stress': stresses, 'ratio': stress_ratio}
@@ -94,8 +100,7 @@ def plot_structure(fig, ax, base, result=None, supports=True, loads=None, reacti
             else:
                 rgb_col = [0, 0.3, abs(stresses['ratio'][index])]
 
-        ax.plot([x[0] for x in coordinate],
-                 [x[1] for x in coordinate], color=rgb_col)
+        ax.plot([x[0] for x in coordinate], [x[1] for x in coordinate], color=rgb_col)
 
         index += 1
 
