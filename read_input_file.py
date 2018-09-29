@@ -49,8 +49,8 @@ def read_structure_file(input_file):
                      'supports': False}
 
     try:
-        setup_folder('Structures')
-        with open("./Structures/" + input_file, "r") as sourcefile:
+        setup_folder('structures')
+        with open("./structures/" + input_file, "r") as sourcefile:
             source_line = ""
             structure = {}
             dof = 3
@@ -133,7 +133,7 @@ def read_structure_file(input_file):
                     read_elements['supports'] = True
 
     except IOError:
-        print("The following file could not be opened: " + "./Structures/" + input_file)
+        print("The following file could not be opened: " + "./structures/" + input_file)
         print("Please make sure that the structural data is available for the program in the run directory.")
         raise IOError
 

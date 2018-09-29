@@ -271,6 +271,7 @@ class Truss(object):
 
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)
+        # plt.axis('equal')
 
         # Reading structural data, boundaries and loads
         (node_list, element_list, boundaries) = read_structure_file(input_file)
@@ -282,7 +283,7 @@ class Truss(object):
         self.boundaries = Boundaries(boundaries)
 
         # Setting up loads
-        self.loads = Loads({'forces': [[25, -9.80]]})
+        self.loads = Loads({'forces': [[20, -9.80]]})
 
         # Setup Input
         self.measurement = ArduinoMeasurements(measurements)
@@ -397,7 +398,6 @@ class Truss(object):
         :return: None
         """
         self.logger.info('Start model updating\n')
-        active_figure = None
         counter = {'total': 0, 'loop': 0}
 
         while True and (counter['total'] < max_iteration or max_iteration == 0):
@@ -409,6 +409,9 @@ class Truss(object):
 
             # Refine/update forces
             self.loads.forces = self.measurement.loads
+
+            plot_structure(self.fig, self.ax, self.original, counter=counter, title=self.title, show=True)
+
 
             # Calculate refreshed and/or updated models
             self.solve(self.original, self.boundaries, self.loads)
@@ -429,6 +432,7 @@ class Truss(object):
         if self.options['graphics']:
             animate(self.title, counter['total'])
 
+        self.logger.info('Exiting...')
         time.sleep(2)
 
     def should_reset(self):

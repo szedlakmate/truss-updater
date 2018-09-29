@@ -1,0 +1,33 @@
+# Input file for TRUSS.py program
+# All commands must be written with uppercase characters
+# *** The values MUST be written in the following line of the command
+# Only lines with the command and nothing more counts. Everything else will be neglected. Even hastags are useless :)
+# The order of the commands is indifferent.
+#
+# Commands and their format (example):
+# ELEMENTS - Elements given by end-nodes: 0, 1 | 0, 2 ...
+# COORDINATES - Nodal coordinates: 0, 0, 0, | 0, 3., 0. ...
+# CROSS-SECTIONS - This data will be evaluated in Python: 36, 5.0*(10**(-4)) ...
+# MATERIALS - This data will be evaluated in Python: 1800, 100.0*(10**9) ...
+# SUPPORTS - Selected dof + Prescribed displacement: 0, 0.0 | 1, 0.0 ...
+# EOF - For compatibility reasons EOF should be placed after the commands
+
+
+ELEMENTS
+0, 3 |1, 4 |0, 1 |0, 2 |1, 2 |2, 3 |2, 4 |3, 6 |4, 7 |3, 4 |3, 5 |4, 5 |5, 6 |5, 7 |2, 5 |6, 7 |
+
+COORDINATES
+0.0, 0.0, 0.0 |0.0, 2000.0, 0.0 |1500.0, 1000.0, 2000.0 |3000.0, 0.0, 0.0 |3000.0, 2000.0, 0.0 |4500.0, 1000.0, 2000.0 |6000.0, 0.0, 0.0 |6000.0, 2000.0, 0.0 |
+
+CROSS-SECTIONS
+36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36
+
+MATERIALS
+1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800
+
+SUPPORTS
+0, 0.0|1, 0.0|2, 0.0|3, 0.0|4, 0.0|5, 0.0|6, 0.0|7, 0.0|8, 0.0|
+
+
+EOF
+

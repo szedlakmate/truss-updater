@@ -21,9 +21,9 @@ def animate(title, maximum):
         """
     images = []
 
-    [images.append(imageio.imread('./Results/%s - %i.png' % (title, i))) for i in range(maximum)]
+    [images.append(imageio.imread('./results/%s - %i.png' % (title, i))) for i in range(maximum)]
 
-    imageio.mimsave('./Results/%s.gif' % title, images, duration=0.33)
+    imageio.mimsave('./results/%s.gif' % title, images, duration=0.33)
 
 
 def scale_displacement(base, result, scale=1.0):
@@ -112,8 +112,8 @@ def plot_structure(fig, ax, base, result=None, supports=True, loads=None, reacti
     if save:
         try:
             if counter is None:
-                fig.savefig('./Results/%s.png' % title)
+                fig.savefig('./results/%s.png' % title)
             else:
-                fig.savefig('./Results/%s - %i.png' % (title, counter['total']))
+                fig.savefig('./results/%s - %i.png' % (title, counter['total']))
         except FileNotFoundError:
             print('Known CI error - Saving files makes Travis fail')
