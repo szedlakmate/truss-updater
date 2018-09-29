@@ -34,4 +34,4 @@ if __name__ == '__main__':
     Truss = Truss(input_file='%s.str' % args.input.replace('.str', ''), title=args.title,
                   measurements=args.measurements, graphics=args.g)
 
-    Truss.start_model_updating(50)
+    Truss.start_model_updating(3)

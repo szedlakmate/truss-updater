@@ -8,11 +8,13 @@ Copyright MIT, Máté Szedlák 2016-2018.
 
 from copy import deepcopy
 import math
+import matplotlib.pyplot as plt
 import numpy
-from logger import start_logging
+import time
 
 from arduino_measurements import ArduinoMeasurements
-from truss_graphics import animate, Arrow3D
+from logger import start_logging
+from truss_graphics import animate, plot_structure
 from read_input_file import read_structure_file
 
 
@@ -267,6 +269,9 @@ class Truss(object):
 
         self.options = {'graphics': graphics}
 
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111)
+
         # Reading structural data, boundaries and loads
         (node_list, element_list, boundaries) = read_structure_file(input_file)
 
@@ -285,6 +290,9 @@ class Truss(object):
 
         # Initiating updated structure
         self.updated = deepcopy(self.original)
+
+        self.fig.canvas.draw()
+        plt.show(block=False)
 
     def solver_helper(self, structure):
         """
@@ -406,10 +414,7 @@ class Truss(object):
             self.solve(self.original, self.boundaries, self.loads)
             deformed = self.solve(self.updated, self.boundaries, self.loads)
 
-            # Draw
-            if self.options['graphics']:
-                active_figure = Arrow3D.plot_structure(self.original, deformed, counter=counter, title=self.title,
-                                                       fig=active_figure, show=True)
+            plot_structure(self.fig, self.ax, self.original, deformed, counter=counter, title=self.title, show=True)
 
             counter['loop'] += 1
             counter['total'] += 1
@@ -423,6 +428,8 @@ class Truss(object):
 
         if self.options['graphics']:
             animate(self.title, counter['total'])
+
+        time.sleep(2)
 
     def should_reset(self):
         """
