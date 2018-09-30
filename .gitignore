@@ -64,4 +64,5 @@ docs/_build/
 # PyBuilder
 target/
 
-SANDBOX
+sandbox
+logs

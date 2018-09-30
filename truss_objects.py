@@ -410,9 +410,6 @@ class Truss(object):
             # Refine/update forces
             self.loads.forces = self.measurement.loads
 
-            plot_structure(self.fig, self.ax, self.original, counter=counter, title=self.title, show=True)
-
-
             # Calculate refreshed and/or updated models
             self.solve(self.original, self.boundaries, self.loads)
             deformed = self.solve(self.updated, self.boundaries, self.loads)
