@@ -346,10 +346,15 @@ class Truss(object):
         known_f_a = helper['known_f_a']
 
         constraints = deepcopy(boundaries.supports)
-
-        forces = [0] * (dof_number - len(constraints))
-        for (dof, force) in deepcopy(loads.forces):
+        
+        forces = [0.0] * dof_number
+        for (dof, force) in loads.forces:
             forces[dof] = force
+
+        force_new = [0.0] * (dof_number - len(constraints))
+        for i, dof in enumerate(known_f_a):
+            force_new[i] = forces[dof]
+
 
         displacements = [0.0] * dof_number
         for (dof, displacement) in deepcopy(loads.displacements):
@@ -366,7 +371,7 @@ class Truss(object):
             stiff_new[i] = [x + y for x, y in zip(stiff_new[i], stiffness_increment)]
 
         # SOLVING THE STRUCTURE
-        dis_new = numpy.linalg.solve(numpy.array(stiff_new), numpy.array(forces))
+        dis_new = numpy.linalg.solve(numpy.array(stiff_new), numpy.array(force_new))
 
         for i, known_f_a in enumerate(known_f_a):
             displacements[known_f_a] = dis_new[i]
