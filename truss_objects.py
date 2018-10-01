@@ -479,10 +479,10 @@ class Truss(object):
 
             if structure.error > self.original.error:
                 # Modification resulted worse result: turn effect backward
-                previous_error = structure.error
+                # previous_error = structure.error
                 structure.element[i].material *= (1 + delta)/(1 - delta)
                 self.solve(structure, self.boundaries, self.loads)
-                self.logger.debug('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
+                # self.logger.debug('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
 
             structures.append(structure)
 
