@@ -54,7 +54,7 @@ class ArduinoMeasurements(object):
     def calibrate(self):
         return [0]
 
-    def update(self):
+    def update(self, loads=None):
         """
         One measurement means a displacement along one axis (X/Y/Z)
         A measurement value is negative if the displacement's ordinate is lower than at the initial moment,
@@ -63,7 +63,7 @@ class ArduinoMeasurements(object):
         Other radial displacement shall be divided into X/Y/Z directional components.
         """
         # TODO: write function for:
-        self.loads = [[8, -9.80]]
+        self.loads = loads
 
         measurements = self.read_raw_input(5, 0)
 

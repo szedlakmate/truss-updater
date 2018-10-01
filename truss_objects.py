@@ -284,7 +284,7 @@ class Truss(object):
         self.boundaries = Boundaries(boundaries)
 
         # Setting up loads
-        self.loads = Loads({'forces': [[14, -9.80]]})
+        self.loads = Loads({})
 
         # Setup Input
         self.measurement = ArduinoMeasurements(measurements)
@@ -411,11 +411,8 @@ class Truss(object):
             self.logger.info('*** %i. loop ***' % counter['loop'])
 
             # Read sensors
-            self.measurement.update()
+            self.measurement.update(loads=Loads({'forces': [[9, -9.80]]}))
             self.logger.debug('Loads are mocked: %s' % str(self.measurement.loads))
-
-            # Refine/update forces
-            self.loads.forces = self.measurement.loads
 
             # Calculate refreshed and/or updated models
             self.solve(self.original, self.boundaries, self.loads)
