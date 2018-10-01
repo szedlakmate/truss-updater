@@ -269,9 +269,10 @@ class Truss(object):
 
         self.options = {'graphics': graphics}
 
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111)
-        # plt.axis('equal')
+        if self.options['graphics']:
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(111)
+            # plt.axis('equal')
 
         # Reading structural data, boundaries and loads
         (node_list, element_list, boundaries) = read_structure_file(input_file)
@@ -283,7 +284,7 @@ class Truss(object):
         self.boundaries = Boundaries(boundaries)
 
         # Setting up loads
-        self.loads = Loads({'forces': [[20, -9.80]]})
+        self.loads = Loads({'forces': [[14, -9.80]]})
 
         # Setup Input
         self.measurement = ArduinoMeasurements(measurements)
@@ -292,8 +293,9 @@ class Truss(object):
         # Initiating updated structure
         self.updated = deepcopy(self.original)
 
-        self.fig.canvas.draw()
-        plt.show(block=False)
+        if self.options['graphics']:
+            self.fig.canvas.draw()
+            plt.show(block=False)
 
     def solver_helper(self, structure):
         """
@@ -419,7 +421,8 @@ class Truss(object):
             self.solve(self.original, self.boundaries, self.loads)
             deformed = self.solve(self.updated, self.boundaries, self.loads)
 
-            plot_structure(self.fig, self.ax, self.original, deformed, counter=counter, title=self.title, show=True)
+            if self.options['graphics']:
+                plot_structure(self.fig, self.ax, self.original, deformed, counter=counter, title=self.title, show=True)
 
             counter['loop'] += 1
             counter['total'] += 1
