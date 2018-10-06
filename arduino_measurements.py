@@ -63,7 +63,7 @@ class ArduinoMeasurements(object):
         Other radial displacement shall be divided into X/Y/Z directional components.
         """
         # TODO: write function for:
-        self.loads = loads
+        self.loads = [[25, -9.8]]  # loads
 
         measurements = self.read_raw_input(5, 0)
 
