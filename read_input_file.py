@@ -34,7 +34,7 @@ def read_structure_file(input_file):
                      'supports': False}
 
     try:
-        with open("./structures/" + input_file, "r") as sourcefile:
+        with open("./structures/%s" % input_file, "r") as sourcefile:
             source_line = ""
             structure = {}
             dof = 3

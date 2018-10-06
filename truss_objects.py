@@ -14,6 +14,7 @@ import os
 import time
 
 from arduino_measurements import ArduinoMeasurements
+from base_objects import *
 from logger import start_logging
 from truss_graphics import animate, plot_structure
 from read_input_file import read_structure_file
@@ -428,7 +429,7 @@ class Truss(object):
             self.logger.info('*** %i. loop ***' % counter['loop'])
 
             # Read sensors
-            self.measurement.update(loads=Loads({'forces': [[9, -9.80]]}))
+            self.measurement.update(self.loads, title=self.title)
             self.logger.debug('Loads are mocked: %s' % str(self.measurement.loads))
 
             # Calculate refreshed and/or updated models
