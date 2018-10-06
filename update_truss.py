@@ -16,11 +16,14 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--title", metavar='str', type=str,
                         help="Manually label project. By default it comes from the input file's name.", default='')
 
-    parser.add_argument("-i", "--input", metavar='str', type=str, default="",
+    parser.add_argument("-s", "--structure", metavar='str', type=str, default="",
                         help="Input file, stored in the ./Structure folder [*.str]", required=True)
 
     parser.add_argument('-m', '--measurements', nargs='+',
                         help='Enlist the measured nodes like: 12X 14Z', required=True)
+
+    parser.add_argument('-i', '--iteration', metavar='int', type=int, default=10,
+                        help='Iteration number (default: 10)', required=False)
 
     parser.add_argument('-g', action='store_true',
                         help='Turns on graphical features', required=False)
@@ -34,7 +37,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Define new structure
-    Truss = Truss(input_file='%s.str' % args.input.replace('.str', ''), title=args.title,
+    Truss = Truss(input_file='%s.str' % args.structure.replace('.str', ''), title=args.title,
                   measurements=args.measurements, graphics=args.g, log=args.l)
 
-    Truss.start_model_updating(3)
+    Truss.start_model_updating(args.iteration)
