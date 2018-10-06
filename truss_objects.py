@@ -243,14 +243,18 @@ class Solution(object):
 
 
 class Truss(object):
-    def __init__(self, input_file, title, measurements, graphics=False):
+    def __init__(self, input_file, title, measurements, graphics=False, log=False):
         """
         Main container
 
         :param input_file: file with structural data
         :param title: title of the project
         :param measurements: list of measured degree of freedoms, like ['12X', '15Z']
+        :param graphics: switch for GUI
+        :param log: switch for saving logs
         """
+        self.options = {'graphics': graphics, 'log': log}
+
         # Labeling object
         if title != '':
             self.title = title
@@ -258,7 +262,7 @@ class Truss(object):
             self.title = input_file.replace('.str', '')
 
         # Initializing logger
-        self.logger = start_logging(True, self.title)
+        self.logger = start_logging(file=self.options['log'], label=self.title)
 
         self.logger.info('*******************************************************')
         self.logger.info('              STARTING TRUSS UPDATER')
@@ -266,8 +270,6 @@ class Truss(object):
         self.logger.info('Input:     %s' % input_file)
         self.logger.info('Measured nodes: %s' % str(measurements))
         self.logger.info('*******************************************************\n')
-
-        self.options = {'graphics': graphics}
 
         if self.options['graphics']:
             self.fig = plt.figure()

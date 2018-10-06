@@ -3,7 +3,7 @@
 import logging
 
 
-def start_logging(file=True, label=''):
+def start_logging(file=False, label=''):
     # create logger with 'spam_application'
     logger = logging.getLogger(label)
     logger.setLevel(logging.DEBUG)
