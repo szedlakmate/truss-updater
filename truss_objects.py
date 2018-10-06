@@ -10,12 +10,24 @@ from copy import deepcopy
 import math
 import matplotlib.pyplot as plt
 import numpy
+import os
 import time
 
 from arduino_measurements import ArduinoMeasurements
 from logger import start_logging
 from truss_graphics import animate, plot_structure
 from read_input_file import read_structure_file
+
+
+def setup_folder(directory):
+    """
+    :param directory: folder name to be checked
+    :return: None
+    """
+    path = str(os.path.dirname('./')) + '/' + directory.replace('/', '').replace('.', '') + '/'
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 def element_length(structure, index):
@@ -254,6 +266,9 @@ class Truss(object):
         :param log: switch for saving logs
         """
         self.options = {'graphics': graphics, 'log': log}
+
+        setup_folder('results')
+        setup_folder('logs')
 
         # Labeling object
         if title != '':

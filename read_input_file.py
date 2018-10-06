@@ -6,22 +6,7 @@ Truss framework created by Máté Szedlák.
 Copyright MIT, Máté Szedlák 2016-2018.
 """
 
-import os
 import itertools
-
-
-def setup_folder(directory):
-    """
-    :param directory: folder name to be checked
-    :return: None
-    """
-    path = str(os.path.dirname('.')) + '/' + directory.replace('/', '').replace('.', '') + '/'
-
-    if not os.path.exists(path):
-        try:
-            os.makedirs(path)
-        except PermissionError:
-            pass
 
 
 def read_structure_file(input_file):
@@ -49,7 +34,6 @@ def read_structure_file(input_file):
                      'supports': False}
 
     try:
-        setup_folder('structures')
         with open("./structures/" + input_file, "r") as sourcefile:
             source_line = ""
             structure = {}
