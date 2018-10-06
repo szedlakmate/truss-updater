@@ -3,14 +3,14 @@
 import logging
 
 
-def start_logging(file=True, label=''):
+def start_logging(file=False, label=''):
     # create logger with 'spam_application'
     logger = logging.getLogger(label)
     logger.setLevel(logging.DEBUG)
 
     if file:
         # create file handler which logs even debug messages
-        fh = logging.FileHandler('debug-%s.log' % label)
+        fh = logging.FileHandler('./logs/%s.log' % label)
         fh.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
         fh.setFormatter(file_formatter)

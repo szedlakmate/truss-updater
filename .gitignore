@@ -1,6 +1,6 @@
 # Personal
 .idea/
-Results/*
+results/*
 
 # Pytest
 .pytest_cache
@@ -63,3 +63,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+sandbox
+logs

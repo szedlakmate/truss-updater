@@ -6,22 +6,7 @@ Truss framework created by Máté Szedlák.
 Copyright MIT, Máté Szedlák 2016-2018.
 """
 
-import os
 import itertools
-
-
-def setup_folder(directory):
-    """
-    :param directory: folder name to be checked
-    :return: None
-    """
-    path = str(os.path.dirname('.')) + '/' + directory.replace('/', '').replace('.', '') + '/'
-
-    if not os.path.exists(path):
-        try:
-            os.makedirs(path)
-        except PermissionError:
-            pass
 
 
 def read_structure_file(input_file):
@@ -49,8 +34,7 @@ def read_structure_file(input_file):
                      'supports': False}
 
     try:
-        setup_folder('Structures')
-        with open("./Structures/" + input_file, "r") as sourcefile:
+        with open("./structures/%s" % input_file, "r") as sourcefile:
             source_line = ""
             structure = {}
             dof = 3
@@ -133,7 +117,7 @@ def read_structure_file(input_file):
                     read_elements['supports'] = True
 
     except IOError:
-        print("The following file could not be opened: " + "./Structures/" + input_file)
+        print("The following file could not be opened: " + "./structures/" + input_file)
         print("Please make sure that the structural data is available for the program in the run directory.")
         raise IOError
 

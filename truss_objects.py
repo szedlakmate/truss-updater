@@ -8,12 +8,27 @@ Copyright MIT, Máté Szedlák 2016-2018.
 
 from copy import deepcopy
 import math
+import matplotlib.pyplot as plt
 import numpy
-from logger import start_logging
+import os
+import time
 
 from arduino_measurements import ArduinoMeasurements
-from truss_graphics import animate, Arrow3D
+from base_objects import *
+from logger import start_logging
+from truss_graphics import animate, plot_structure
 from read_input_file import read_structure_file
+
+
+def setup_folder(directory):
+    """
+    :param directory: folder name to be checked
+    :return: None
+    """
+    path = str(os.path.dirname('./')) + '/' + directory.replace('/', '').replace('.', '') + '/'
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 def element_length(structure, index):
@@ -241,14 +256,21 @@ class Solution(object):
 
 
 class Truss(object):
-    def __init__(self, input_file, title, measurements, graphics=False):
+    def __init__(self, input_file, title, measurements, graphics=False, log=False):
         """
         Main container
 
         :param input_file: file with structural data
         :param title: title of the project
         :param measurements: list of measured degree of freedoms, like ['12X', '15Z']
+        :param graphics: switch for GUI
+        :param log: switch for saving logs
         """
+        self.options = {'graphics': graphics, 'log': log}
+
+        setup_folder('results')
+        setup_folder('logs')
+
         # Labeling object
         if title != '':
             self.title = title
@@ -256,7 +278,7 @@ class Truss(object):
             self.title = input_file.replace('.str', '')
 
         # Initializing logger
-        self.logger = start_logging(True, self.title)
+        self.logger = start_logging(file=self.options['log'], label=self.title)
 
         self.logger.info('*******************************************************')
         self.logger.info('              STARTING TRUSS UPDATER')
@@ -265,7 +287,10 @@ class Truss(object):
         self.logger.info('Measured nodes: %s' % str(measurements))
         self.logger.info('*******************************************************\n')
 
-        self.options = {'graphics': graphics}
+        if self.options['graphics']:
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(111)
+            # plt.axis('equal')
 
         # Reading structural data, boundaries and loads
         (node_list, element_list, boundaries) = read_structure_file(input_file)
@@ -277,7 +302,7 @@ class Truss(object):
         self.boundaries = Boundaries(boundaries)
 
         # Setting up loads
-        self.loads = Loads({'forces': [[25, -9.80]]})
+        self.loads = Loads({'forces': [[25, -9.8]]})
 
         # Setup Input
         self.measurement = ArduinoMeasurements(measurements)
@@ -285,6 +310,10 @@ class Truss(object):
 
         # Initiating updated structure
         self.updated = deepcopy(self.original)
+
+        if self.options['graphics']:
+            self.fig.canvas.draw()
+            plt.show(block=False)
 
     def solver_helper(self, structure):
         """
@@ -337,10 +366,15 @@ class Truss(object):
         known_f_a = helper['known_f_a']
 
         constraints = deepcopy(boundaries.supports)
-
-        forces = [0] * (dof_number - len(constraints))
-        for (dof, force) in deepcopy(loads.forces):
+        
+        forces = [0.0] * dof_number
+        for (dof, force) in loads.forces:
             forces[dof] = force
+
+        force_new = [0.0] * (dof_number - len(constraints))
+        for i, dof in enumerate(known_f_a):
+            force_new[i] = forces[dof]
+
 
         displacements = [0.0] * dof_number
         for (dof, displacement) in deepcopy(loads.displacements):
@@ -357,7 +391,7 @@ class Truss(object):
             stiff_new[i] = [x + y for x, y in zip(stiff_new[i], stiffness_increment)]
 
         # SOLVING THE STRUCTURE
-        dis_new = numpy.linalg.solve(numpy.array(stiff_new), numpy.array(forces))
+        dis_new = numpy.linalg.solve(numpy.array(stiff_new), numpy.array(force_new))
 
         for i, known_f_a in enumerate(known_f_a):
             displacements[known_f_a] = dis_new[i]
@@ -395,19 +429,15 @@ class Truss(object):
             self.logger.info('*** %i. loop ***' % counter['loop'])
 
             # Read sensors
-            self.measurement.update()
+            self.measurement.update(self.loads, title=self.title)
             self.logger.debug('Loads are mocked: %s' % str(self.measurement.loads))
-
-            # Refine/update forces
-            self.loads.forces = self.measurement.loads
 
             # Calculate refreshed and/or updated models
             self.solve(self.original, self.boundaries, self.loads)
             deformed = self.solve(self.updated, self.boundaries, self.loads)
 
-            # Draw
             if self.options['graphics']:
-                Arrow3D.plot_structure(self.original, deformed, counter=counter, title=self.title)
+                plot_structure(self.fig, self.ax, self.original, deformed, counter=counter, title=self.title, show=True)
 
             counter['loop'] += 1
             counter['total'] += 1
@@ -421,6 +451,9 @@ class Truss(object):
 
         if self.options['graphics']:
             animate(self.title, counter['total'])
+
+        self.logger.info('Exiting...')
+        time.sleep(2)
 
     def should_reset(self):
         """
@@ -445,7 +478,6 @@ class Truss(object):
         :return: Structure object
         """
         self.logger.debug('Update')
-        # Arrow3D.plot_structure(self.original, result=self.updated, dof=2, save=True, show=False)
         return self.compile(self.guess())
 
     def guess(self):
@@ -465,10 +497,10 @@ class Truss(object):
 
             if structure.error > self.original.error:
                 # Modification resulted worse result: turn effect backward
-                previous_error = structure.error
+                # previous_error = structure.error
                 structure.element[i].material *= (1 + delta)/(1 - delta)
                 self.solve(structure, self.boundaries, self.loads)
-                self.logger.debug('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
+                # self.logger.debug('Recounted error: %.6f -> %.6f' % (previous_error, structure.error))
 
             structures.append(structure)
 

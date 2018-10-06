@@ -8,6 +8,8 @@ Copyright MIT, Máté Szedlák 2016-2018.
 
 import random
 
+from base_objects import Loads
+
 
 def convert_node_id_to_dof_id(node_list):
     dof_list = []
@@ -54,7 +56,7 @@ class ArduinoMeasurements(object):
     def calibrate(self):
         return [0]
 
-    def update(self):
+    def update(self, loads, title=''):
         """
         One measurement means a displacement along one axis (X/Y/Z)
         A measurement value is negative if the displacement's ordinate is lower than at the initial moment,
@@ -62,10 +64,21 @@ class ArduinoMeasurements(object):
 
         Other radial displacement shall be divided into X/Y/Z directional components.
         """
-        # TODO: write function for:
-        self.loads = [[25, -9.80]]
 
-        measurements = self.read_raw_input(25, 0)
+        # TODO: write function for:
+        try:
+            with open("./loads/%s.txt" % title, "r") as sourcefile:
+                load_input = sourcefile.readline().strip().split(' ')
+
+            load = Loads({'forces': [[int(load_input[0]), float(load_input[1])]]})
+            loads.forces = load.forces
+
+        except IOError:
+            print("The following file could not be opened: ./loads/%s" % title)
+            print("Please make sure that the load data is available for the program")
+            raise IOError
+
+        measurements = self.read_raw_input(5, 0)
 
         self.displacements = [[self.id_list[i], self.initial_measurements[i] - measurements[i]]
                               for i in range(len(self.id_list))]
