@@ -37,7 +37,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Define new structure
-    Truss = Truss(input_file='%s.str' % args.structure.replace('.str', ''), title=args.title,
+    Truss = Truss(input_file='%s.str' % args.structure.replace('.str', ''), title=args.title.replace('.str', ''),
                   measurements=args.measurements, graphics=args.g, log=args.l)
 
     Truss.start_model_updating(args.iteration)

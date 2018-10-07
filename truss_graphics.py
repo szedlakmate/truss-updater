@@ -74,8 +74,8 @@ def post_process(original, deformed):
     return {'stress': stresses, 'ratio': stress_ratio}
 
 
-def plot_structure(fig, ax, base, result=None, supports=True, loads=None, reactions=False, values=False,
-                   save=True, show=False, node_number=False, animate=False, counter=None, title='test'):
+def plot_structure(fig, ax, base, result=None, dof=2, supports=True, loads=None, reactions=False, values=False,
+                   save=True, show=False, node_number=False, counter=None, title='test'):
 
     if result is None:
         structure = base
@@ -99,8 +99,10 @@ def plot_structure(fig, ax, base, result=None, supports=True, loads=None, reacti
                 rgb_col = [stresses['ratio'][index], 0.3, 0]
             else:
                 rgb_col = [0, 0.3, abs(stresses['ratio'][index])]
-
-        ax.plot([x[0] for x in coordinate], [x[1] for x in coordinate], color=rgb_col)
+        if dof == 2:
+            ax.plot([x[0] for x in coordinate], [x[1] for x in coordinate], color=rgb_col)
+        else:
+            ax.plot([x[0] for x in coordinate], [x[1] for x in coordinate], zs=[x[2] for x in coordinate], color=rgb_col)
 
         index += 1
 
