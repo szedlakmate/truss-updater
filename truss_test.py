@@ -64,9 +64,9 @@ class TestClassInitializations(object):
 
 
 class TestStaticCalculations(object):
-    def test_element_length(self, BRIDGE):
+    def test_element_length(self, bridge):
         """Test element length calculation"""
-        assert element_length(BRIDGE.original, 0) == 158.11388300841898
+        assert element_length(bridge.original, 0) == 158.11388300841898
 
     def test_error(self, bridge_displacement):
         """Test error calculation"""
@@ -78,35 +78,35 @@ class TestStaticCalculations(object):
 
 class TestBridgeCalculations(object):
     """Test stiffness matrix compilation"""
-    def test_stiffness_matrix_calculation(self, BRIDGE_STIFFNESS_MATRIX):
-        Bridge = Truss('bridge.str', 'test', ['11Y'])
-        new_stiffness_matrix = calculate_stiffness_matrix(Bridge.original)
+    def test_stiffness_matrix_calculation(self, bridge_stiffness_matrix):
+        bridge = Truss('bridge.str', 'test', ['11Y'])
+        new_stiffness_matrix = calculate_stiffness_matrix(bridge.original)
 
-        assert new_stiffness_matrix == BRIDGE_STIFFNESS_MATRIX
+        assert new_stiffness_matrix == bridge_stiffness_matrix
 
-    def test_2d_structural_z_displacement(self, BRIDGE):
+    def test_2d_structural_z_displacement(self, bridge):
         """Test whether 2D structures Z-displacement is blocked automatically"""
-        deformed = BRIDGE.solve(BRIDGE.original, BRIDGE.boundaries, BRIDGE.loads)
+        deformed = bridge.solve(bridge.original, bridge.boundaries, bridge.loads)
         z_total = sum([x[2] for x in deformed.node])
 
         assert z_total == 0
 
-    def test_should_reset(self, BRIDGE):
+    def test_should_reset(self, bridge):
         """Test reset condition"""
-        BRIDGE.original.error = 0
-        BRIDGE.updated.error = 0
-        assert BRIDGE.should_reset() is False
+        bridge.original.error = 0
+        bridge.updated.error = 0
+        assert bridge.should_reset() is False
 
-        BRIDGE.original.error = 1
-        BRIDGE.updated.error = 0
-        assert BRIDGE.should_reset() is False
+        bridge.original.error = 1
+        bridge.updated.error = 0
+        assert bridge.should_reset() is False
 
-        BRIDGE.original.error = 0
-        BRIDGE.updated.error = 1
-        assert BRIDGE.should_reset() is True
+        bridge.original.error = 0
+        bridge.updated.error = 1
+        assert bridge.should_reset() is True
 
-    def test_update_is_better(self, BRIDGE):
-        """Test first update for BRIDGE"""
-        BRIDGE.start_model_updating(1)
-        assert BRIDGE.should_reset() is False
-        assert BRIDGE.original.error > BRIDGE.updated.error
+    def test_update_is_better(self, bridge):
+        """Test first update for bridge"""
+        bridge.start_model_updating(1)
+        assert bridge.should_reset() is False
+        assert bridge.original.error > bridge.updated.error

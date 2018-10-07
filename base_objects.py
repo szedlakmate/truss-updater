@@ -151,23 +151,3 @@ class Loads(object):
                 else:
                     raise TypeError(
                         'stress data is corrupt. Type should be [int, float] but found:\n%s' % str(stress))
-
-
-class Solution(object):
-    """
-    Solution container model
-
-    * displacement [DOF ID, displacement m]
-    * node: list of nodal coordinates [ 1.[X, Y, Z], 2.[X, Y, Z], ... ]
-    * reaction [ID, force KN] - DOF ID
-    * stress [ID, stress] - element ID
-    """
-    # TODO: refactor to result a Structure instead of non-standard arrays
-    def __init__(self, number_of_nodes):
-        """
-        :param number_of_nodes: used for vector length calculation
-        """
-        self.displacement = [None] * number_of_nodes * 3
-        self.node = [[None, None, None]] * number_of_nodes
-        self.reactions = [[None, None]] * 0
-        self.stress = [[None, None]] * 0

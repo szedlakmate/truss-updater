@@ -74,7 +74,7 @@ def post_process(original, deformed):
     return {'stress': stresses, 'ratio': stress_ratio}
 
 
-def plot_structure(fig, ax, base, result=None, dof=2, supports=True, loads=None, reactions=False, values=False,
+def plot_structure(fig, ax, base, result=None, dof=2,  # supports=True, loads=None, reactions=False, values=False,
                    save=True, show=False, node_number=False, counter=None, title='test'):
 
     if result is None:
@@ -83,8 +83,7 @@ def plot_structure(fig, ax, base, result=None, dof=2, supports=True, loads=None,
         structure = result
         structure.node = scale_displacement(base, result, 1)
 
-    if result:
-        stresses = post_process(base, result)
+    stresses = None
 
     # Plot structure
     index = 0
@@ -95,6 +94,8 @@ def plot_structure(fig, ax, base, result=None, dof=2, supports=True, loads=None,
 
     for coordinate in structure.generate_coordinate_list():
         if result:
+            if stresses is None:
+                stresses = post_process(base, result)
             if stresses['ratio'][index] > 0:
                 rgb_col = [stresses['ratio'][index], 0.3, 0]
             else:
@@ -102,7 +103,8 @@ def plot_structure(fig, ax, base, result=None, dof=2, supports=True, loads=None,
         if dof == 2:
             ax.plot([x[0] for x in coordinate], [x[1] for x in coordinate], color=rgb_col)
         else:
-            ax.plot([x[0] for x in coordinate], [x[1] for x in coordinate], zs=[x[2] for x in coordinate], color=rgb_col)
+            ax.plot([x[0] for x in coordinate], [x[1] for x in coordinate], zs=[x[2] for x in coordinate],
+                    color=rgb_col)
 
         index += 1
 

@@ -8,13 +8,6 @@ def start_logging(file=False, label=''):
     logger = logging.getLogger(label)
     logger.setLevel(logging.DEBUG)
 
-    if file:
-        # create file handler which logs even debug messages
-        fh = logging.FileHandler('./logs/%s.log' % label)
-        fh.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
-        fh.setFormatter(file_formatter)
-
     # create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
@@ -24,6 +17,11 @@ def start_logging(file=False, label=''):
     # add the handlers to the logger
     logger.addHandler(ch)
     if file:
+        # create file handler which logs even debug messages
+        fh = logging.FileHandler('./logs/%s.log' % label)
+        fh.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
+        fh.setFormatter(file_formatter)
         logger.addHandler(fh)
 
     return logger
