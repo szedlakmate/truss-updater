@@ -84,7 +84,6 @@ def read_structure_file(input_file):
 
                     read_elements['cross-sections'] = True
 
-
                 if source_line.upper() == "MATERIALS":
                     source_line = sourcefile.readline().strip()
                     input_string = source_line.replace(',', '|').replace(';', '|').split('|')
